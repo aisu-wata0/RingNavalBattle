@@ -1,6 +1,7 @@
 #include <stdio.h>
 
-enum spot { unk, water, ship, hit }
+enum spot { unk, water, ship_l, ship_u, captain, hit }
+
 #define MINE 0
 #define ENEMIES 1
 #define fail -1
@@ -26,7 +27,7 @@ class Board {
 		}
 	}
 	
-	spot& at(i,j){
+	spot& at(long i, long j){
 		return sea.at(i*nc + j);
 	}
 	
@@ -38,14 +39,28 @@ class Board {
 		}
 	}
 	
-	int set_ship(long i, long j, Ship sh){
+	int set_ship(long y, long x, Ship sh){
 		if(i+sh.height-1 >= nc || j+sh.width-1 >= nl){
 			return fail;
 		}
-		for(long k=i; k <= i+sh.height-1; k++){
-			for(long l=j; l <= i+sh.width-1; l++){
-				this->at(k,l) = ship;
+		
+		this->at(y,x) = captain;
+		for(long k=y; k <= y+sh.height-1; k++){
+			this->at(k,l) = ship_u;
+		}
+		for(long l=x; l <= x+sh.width-1; l++){
+			this->at(k,l) = ship_l;
+		}
+		for(long k=y+1; k <= y+sh.height-1; k++){
+			for(long l=x+1; l <= x+sh.width-1; l++){
+				this->at(k,l) = ship_l;
 			}
+		}
+	}
+	
+	void attackField(long i, long j){
+		if(this->Board.at(i, j) == ship){
+			check_if_ship_destroyed
 		}
 	}
 }
@@ -57,8 +72,10 @@ void board_setup(Board& B){
 }
 
 
+
+
 int main(int argc, char **argv)
 {
-	
+	enemyBoard.attackField(3,4);
 	return 0;
 }
