@@ -34,7 +34,7 @@ class Board {
 	int ship_n, ship_max;
 	vector<spot> sea;
 	
-	Board(Coord sea_max, int posession): sea(sea_max.y*sea_max.x), posession(posession){
+	Board(Coord sea_max, int posession): sea_max(sea_max.y*sea_max.x), posession(posession){
 		if(posession == MINE){
 			this->set_board(water);
 		} else {
@@ -67,8 +67,11 @@ class Board {
 
 	int set_ship(Ship sh){
 		int ship_id = ship_max;
+		/*if(ship_id == ship_max){
+			return fail;	//more ships than max
+		}*/
 		ship_max++;
-		ship_n++;
+		ship_n++;	//ship_n wa nan desu ka
 		
 		if(sh.not_exists(sea_max)){
 			return fail;
@@ -96,7 +99,7 @@ class Board {
 		it = pos;
 		
 		// go left
-		while(this->at(it).id == this->at(pos).id){
+		while(this->at(it).id == this->at(pos).id && it.x >= 0){
 			if(this->at(it).hit == false){
 				ship_hp++;
 			}
@@ -108,7 +111,7 @@ class Board {
 		// go up and left
 		it.y -= 1;
 		
-		while(this->at(it).id == this->at(pos).id){
+		while(this->at(it).id == this->at(pos).id && it.y >= 0 && it.x >= 0){
 			for(it.x = pos.x; it.x >= sh.top_left.x; it.x--){
 				if(this->at(it).hit == false){
 					ship_hp++;
@@ -121,13 +124,28 @@ class Board {
 		// go right TODO
 		it.y = pos.y;
 		it.x = pos.x + 1;
-		while(this->at(it).id == this->at(pos).id){
+		while(this->at(it).id == this->at(pos).id && it.x < sea_max.x){ //less or equal or just less
 			if(this->at(it).hit == false){
 				ship_hp++;
 			}
-			it.x--;
+			it.x++;
 		}
+		
+		it.x--;
+		
 		// go bot right
+
+		/*while(this->at(it).id == this->at(pos).id && it.y < sea_max.y && it.x < sea_max.x){
+			for(it.x = pos.x; it.x < sh.br.x; it.x++){
+				if(this->at(it).hit == false){
+					ship_hp++;
+				}
+			}
+			it.y++;
+		}
+		
+		it.y --;
+		*/
 		
 		
 		return ship_hp;
@@ -137,7 +155,7 @@ class Board {
 		int ship_hp;
 		sh.top_left = fail;
 		
-		if(this->Board.at(pos).id <= max_ship_id){
+		if(this->Board.at(pos).id <= max_ship_id){  //max ship id?
 			this->Board.at(pos).hit = true;
 			
 			if((ship_hp = get_ship(pos, Ship sh)) == 0){
