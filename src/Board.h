@@ -47,6 +47,7 @@ class Board {
 		for(long i = 0; i < sea_max.y; i++){
 			for(long j=0; j < sea_max.y; j++){
 				this->at(i,j).idn = sp;
+				this->at(i,j).hit = false;
 			}
 		}
 	}
@@ -201,7 +202,7 @@ class Board {
 				cout<<" ";
 				break;
 			case water:
-				cout<<".";
+				cout<<"~";
 				break;
 			default:
 				if(spot.hit){
