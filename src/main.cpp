@@ -7,62 +7,60 @@
 using namespace std;
 
 void board_setup(Board& board){
+	Ship newShip;
+	long numShips;
+	cout << "Taishou, how many ships do you want to dispatch?\n";
+	cin >> numShips;
 	
-	// read coordinates
-	// no rotation
+	for(long i = 0; i < numShips; i++){
+		cout << "Enter coordinates for top left (y, x) of the ship #" << i+1 << "\n";
+		cin >> newShip.top_left.y >> newShip.top_left.x;
+	
+		cout << "Enter height(alltura) then width(largura) of ship #" << i+1 << "\n";
+		cin >> newShip.height >> newShip.width;
+		
+		board.set_ship(newShip);
+		cout<<"\n\n";
+	}
+	
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **argv)//dwqewq
 {
 	Board my_board(Coord{.y = 7, .x = 7}, MINE);
-	
-	cout<<"\n\n";
-	my_board.print();
-	
-	Ship ship;
 	Ship target;
 
-	ship.top_left.y = 0;
-	ship.top_left.x = 0;
-	ship.height = 3;
-	ship.width = 1;
-	
-	my_board.set_ship(ship);
-
-	cout<<"\n\n";
-
-	my_board.print();
-	
-	ship.top_left.y = 2;
-	ship.top_left.x = 2;
-	ship.height = 1;
-	ship.width = 3;
-	
-	my_board.set_ship(ship);
-
-	cout<<"\n\n";
-
+	board_setup(my_board);
 	my_board.print();
 	
 	Coord att;
 	att.x = 0;
 	
 	for(long att_coor=0; att_coor <= 2; att_coor++){
+		for(long att_cory=0; att_cory <= 2; att_cory++){
+			att.y = att_cory;
+			att.x = att_coor;
+			cout<<"\n attack "<< att.y <<","<< att.x <<" return: "<< my_board.attackField(att, target) <<"\n";
+			my_board.print();
+			cout<<"\n\n";
+		}
+	}
+	// first ship destroyed board NOT dead, changed first ship coord[0 0] hxw[3 3] for test purposes
+	/*att.x = 0;
+	for(long att_coor=0; att_coor <= 2; att_coor++){
 		att.y = att_coor;
 		cout<<"\n attack "<< att.y <<","<< att.x <<" return: "<< my_board.attackField(att, target) <<"\n";
 		my_board.print();
 		cout<<"\n\n";
 	}
-	// first ship destroyed board dead
 	att.y = 2;
 	for(long att_coor=2; att_coor <= 2+3-1; att_coor++){
 		att.x = att_coor;
 		cout<<"\n attack "<< att.y <<","<< att.x <<" return: "<< my_board.attackField(att, target) <<"\n";
 		my_board.print();
 		cout<<"\n\n";
-	}
-	// second ship destroyed board dead
-	
-	board_setup(my_board);
+	}*/
+	//second ship destroyed board dead
+	my_board.print();
 	return 0;
 }

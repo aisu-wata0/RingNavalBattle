@@ -141,21 +141,24 @@ class Board {
 		
 		it.y --;
 		ship.height = it.y - ship.top_left.y + 1;
-		
-		// TODO:
+
 		// go top right
-//		for{
-//			for{
-//				
-//			}
-//		}
-//		
-//		// go bot left
-//		for{
-//			for{
-//				
-//			}
-//		}
+		for(it.x = pos.x+1; it.x <= ship.top_left.x + ship.width; it.x++){
+			for(it.y = pos.y-1; it.y >= ship.top_left.y; it.y--){
+				if(this->at(it).hit == false && this->at(it).idn == this->at(pos).idn){
+					ship_hp++;
+				}
+			}
+		}
+		
+		// go bot left
+		for(it.x = pos.x - 1; it.x >= ship.top_left.x; it.x--){
+			for(it.y = pos.y + 1; it.y <= ship.top_left.y + ship.height; it.y++){
+				if(this->at(it).hit == false && this->at(it).idn == this->at(pos).idn){
+					ship_hp++;
+				}
+			}
+		}
 
 		return ship_hp;
 	}
