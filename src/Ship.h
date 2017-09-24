@@ -42,7 +42,7 @@ class Ship {
 	
 	bool not_exist(Coord sea_max){
 		return (this->bot_right().y > sea_max.y-1 || this->bot_right().x > sea_max.x-1
-		|| this->top_left.x < 0 || this->top_left.y < 0);
+		|| this->top_left.x < 0 || this->top_left.y < 0 || height <= 0 || width <= 0);
 	}
 };
 
