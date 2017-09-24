@@ -5,6 +5,7 @@
 
 #include "Ship.h"
 #include "Board.h"
+#include "Network.h"
 
 using namespace std;
 
@@ -51,28 +52,127 @@ void print_ascii(string filename){
 	in_f.close();
 }
 
-int main(int argc, char **argv)
-{
-	//print_ascii("../content/amatsukaze-pc160.txt");
-	
-	Board my_board(Coord{.y = 5, .x = 5}, MINE);
-	Ship target;
+//int main(int argc, char **argv)
+//{
+//	//print_ascii("../content/amatsukaze-pc160.txt");
+//	
+//	Board my_board(Coord{.y = 5, .x = 5}, MINE);
+//	Ship target;
+//
+//	board_setup(my_board);
+//	my_board.print();
+//	
+//	Coord att;
+//	att.x = 0;
+//	
+//	for(long att_coor=0; att_coor <= 2; att_coor++){
+//		for(long att_cory=0; att_cory <= 2; att_cory++){
+//			att.y = att_cory;
+//			att.x = att_coor;
+//			cout<<"\n attack "<< att.y <<","<< att.x <<" return: "<< my_board.attackField(att, target) <<"\n";
+//			my_board.print();
+//			cout<<"\n\n";
+//		}
+//	}
+//	
+//	return 0;
+//}
 
-	board_setup(my_board);
-	my_board.print();
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <memory.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <iostream>
+
+void read_from_client(){
+	int result = 0;
 	
-	Coord att;
-	att.x = 0;
+//	sockaddr_in addr_dest = {};
+//	addr_dest.sin_family = AF_INET;
+//	addr_dest.sin_port = PORT;	
+	//inet_pton(AF_INET, "192.168.100.52", &(addr_dest.sin_addr));
 	
-	for(long att_coor=0; att_coor <= 2; att_coor++){
-		for(long att_cory=0; att_cory <= 2; att_cory++){
-			att.y = att_cory;
-			att.x = att_coor;
-			cout<<"\n attack "<< att.y <<","<< att.x <<" return: "<< my_board.attackField(att, target) <<"\n";
-			my_board.print();
-			cout<<"\n\n";
-		}
+	sockaddr_storage addr_dest = {};
+	result = resolvehelper("192.168.100.52", AF_INET, PORT_S, &addr_dest);
+	if (result == -1){
+		int lasterror = errno;
+		cout << "error: " << lasterror;
+		exit(1);
+	}
+
+	sockaddr_in addr_listener = {};
+	addr_listener.sin_family = AF_INET;
+	addr_listener.sin_port = PORT;
+
+	// get socket
+	int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+
+	// bind listener
+	result = bind(sock, (sockaddr*)&addr_listener, sizeof(addr_listener));
+	if (result == -1){
+		int lasterror = errno;
+		cout << "error: " << lasterror;
+		exit(1);
+	}
+
+	// connect listener to dest
+	result = connect(sock, (sockaddr*)&addr_dest, sizeof(addr_dest));
+	if (result == -1){
+		int lasterror = errno;
+		cout << "error: " << lasterror;
+		exit(1);
 	}
 	
-	return 0;
+	char buf[1024];
+	int bytes = read(sock, buf, sizeof(buf));
+	
+	cout << "received " << bytes << "bytes\n";
+	
+	close(sock);
+}
+
+void sendto_server(){
+	int result = 0;
+	int sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+	sockaddr_in addr_listener = {};
+	addr_listener.sin_family = AF_INET;
+	addr_listener.sin_port = PORT;
+	
+	result = bind(sock, (sockaddr*)&addr_listener, sizeof(addr_listener));
+	if (result == -1){
+		int lasterror = errno;
+		cout << "error: " << lasterror;
+		exit(1);
+	}
+
+	sockaddr_storage addr_dest = {};
+	result = resolvehelper("192.168.100.8", AF_INET, PORT_S, &addr_dest);
+	if (result != 0){
+		int lasterror = errno;
+		cout << "error: " << lasterror;
+		exit(1);
+	}
+
+	const char* msg = "Tegami";
+	size_t msg_length = strlen(msg);
+
+	result = sendto(sock, msg, msg_length, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
+
+	cout << result << " bytes sent" << endl;
+}
+
+
+int main(int argc, char **argv)
+{
+	sendto_server();
 }
