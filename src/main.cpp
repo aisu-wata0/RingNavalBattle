@@ -35,7 +35,7 @@ void board_setup(Board& board){
 int main(int argc, char **argv)
 {
 	ifstream in_f;
-	in_f.open("../content/kancolle.txt");
+	in_f.open("../content/amatsukaze.txt");
 	string buffer;
 	while(getline(in_f, buffer)){
 		cout << buffer <<"\n";
