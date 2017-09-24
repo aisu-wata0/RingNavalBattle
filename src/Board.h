@@ -151,14 +151,13 @@ class Board {
 			if((ship_hp = get_ship(pos, ship)) == 0){
 				ship_n--;
 				if(ship_n == 0){
+                    //cout << "dead" << std::endl;
 					return board_dead;
-				} else {
-					return ship_hp;
-				}
-			}
-		} else {
-			return(FAIL);
-		}
+                }
+            }
+            return ship_hp;
+        }
+        return(FAIL);
 	}
 	
 	void print(){
