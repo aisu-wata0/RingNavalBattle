@@ -11,6 +11,7 @@
     <File Name="src/Ship.h"/>
     <File Name="src/main.cpp"/>
     <File Name="src/Board.h"/>
+    <File Name="src/Network.h"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>
