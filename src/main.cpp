@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
+#include <windows.h>
 
 #include "Ship.h"
 #include "Board.h"
@@ -19,7 +21,10 @@ void board_setup(Board& board){
 		cout << "Enter height(alltura) then width(largura) of ship #" << i+1 << "\n";
 		cin >> newShip.height >> newShip.width;
 		
-		board.set_ship(newShip);
+		if(board.set_ship(newShip) == FAIL){
+			i--;
+			cout << "Ship depatching failed\n";
+		}
 		cout<<"\n\n";
 	}
 	
@@ -27,6 +32,20 @@ void board_setup(Board& board){
 
 int main(int argc, char **argv)//dwqewq
 {
+	HWND console = GetConsoleWindow();
+	RECT r;
+	GetWindowRect(console, &r); //stores the console's current dimensions
+	MoveWindow(console, r.left, r.top, 1920, 1080, TRUE);
+	
+	ifstream in_f;
+	//streambuf* cinbuf = cin.rdbuf(); //save old buf; 	ifstream in_f;
+	in_f.open("../content/kancolle.txt");
+	string buffer;
+	while(getline(in_f, buffer)){
+		cout << buffer <<"\n";
+	}
+	in_f.close();
+	
 	Board my_board(Coord{.y = 7, .x = 7}, MINE);
 	Ship target;
 
