@@ -3,13 +3,16 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <iomanip>
+#include <cstdint>
+
 #include <vector>
 #include <string>
 
 #include "Ship.h"
 
-//namespace std {
-using namespace std;
+namespace std {
+
 class Board {
 	public:
 	Coord sea_max;
@@ -20,6 +23,8 @@ class Board {
 	Board(Coord sea_max, int posession): posession(posession), sea(sea_max.y*sea_max.x){
 		this->sea_max.y = sea_max.y;
 		this->sea_max.x = sea_max.x;
+		ship_max = 0;
+		ship_n = 0;
 		if(posession == MINE){
 			this->set_board(water);
 		} else {
@@ -82,9 +87,9 @@ class Board {
 	int get_ship(Coord pos, Ship& ship){
 		int ship_hp = 0;
 		Coord it;
-		it = pos;
-		
+
 		// go left
+		it = pos;
 		while(this->at(it).idn == this->at(pos).idn){
 			if(this->at(it).hit == false){
 				ship_hp++;
@@ -95,15 +100,16 @@ class Board {
 		ship.top_left.x = it.x + 1;
 		
 		// go up and left
-		it.y -= 1;
-		
+		it.y = pos.y - 1;
+		it.x = pos.x;
 		while(this->at(it).idn == this->at(pos).idn){
-			for(it.x = pos.x; it.x >= ship.top_left.x; it.x--){
+			for(; it.x >= ship.top_left.x; it.x--){
 				if(this->at(it).hit == false){
 					ship_hp++;
 				}
 			}
 			it.y--;
+			it.x = pos.x;
 		}
 		ship.top_left.y = it.y + 1;
 		
@@ -121,19 +127,36 @@ class Board {
 		ship.width = it.x - ship.top_left.x + 1;
 		
 		// go bot right
-
+		it.y = pos.y + 1;
+		it.x = pos.x;
 		while(this->at(it).idn == this->at(pos).idn){
-			for(it.x = pos.x; it.x <= ship.bot_right().x; it.x++){
+			for(; it.x <= ship.bot_right().x; it.x++){
 				if(this->at(it).hit == false){
 					ship_hp++;
 				}
 			}
 			it.y++;
+			it.x = pos.x;
 		}
 		
 		it.y --;
 		ship.height = it.y - ship.top_left.y + 1;
 		
+		// TODO:
+		// go top right
+//		for{
+//			for{
+//				
+//			}
+//		}
+//		
+//		// go bot left
+//		for{
+//			for{
+//				
+//			}
+//		}
+
 		return ship_hp;
 	}
 	
@@ -151,13 +174,12 @@ class Board {
 			if((ship_hp = get_ship(pos, ship)) == 0){
 				ship_n--;
 				if(ship_n == 0){
-                    //cout << "dead" << std::endl;
 					return board_dead;
-                }
-            }
-            return ship_hp;
-        }
-        return(FAIL);
+				}
+			}
+			return ship_hp;
+		}
+		return FAIL;
 	}
 	
 	void print(){
@@ -188,5 +210,6 @@ class Board {
 	}
 };
 
-//}// namespace std
+}// namespace std
+
 #endif

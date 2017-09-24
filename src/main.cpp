@@ -20,68 +20,49 @@ int main(int argc, char **argv)
 	my_board.print();
 	
 	Ship ship;
-    Ship target;
-    
+	Ship target;
+
 	ship.top_left.y = 0;
 	ship.top_left.x = 0;
 	ship.height = 3;
 	ship.width = 1;
 	
 	my_board.set_ship(ship);
-    
+
 	cout<<"\n\n";
-    
+
 	my_board.print();
 	
 	ship.top_left.y = 2;
 	ship.top_left.x = 2;
 	ship.height = 1;
 	ship.width = 3;
-    
+	
 	my_board.set_ship(ship);
 
 	cout<<"\n\n";
 
-    my_board.print();
-    
-    Coord att;
-    att.x = 0;
-    att.y = 0;
-
-    my_board.attackField(att, target);
-    att.y++;
-    my_board.print();
-    cout<<"\n\n";
-
-    
-    my_board.attackField(att, target);
-    att.y++;
-    my_board.print();
-    cout<<"\n\n";
-
-
-    my_board.attackField(att, target);
-    my_board.print();
-    cout<<"\n\n";
-
-    //first ship destroyed
-    /*
-    att.x = 2;
-    att.y = 2;
-    
-    my_board.attackField(att, target);
-    att.x++;
-    //my_board.print();
-    
-    my_board.attackField(att, target);
-    att.x++;
-    //my_board.print();
-
-    my_board.attackField(att, target);
-    //my_board.print();
-    //second ship destroyed board dead
-	cout<<"\n\n";*/
-    
+	my_board.print();
+	
+	Coord att;
+	att.x = 0;
+	
+	for(long att_coor=0; att_coor <= 2; att_coor++){
+		att.y = att_coor;
+		cout<<"\n attack "<< att.y <<","<< att.x <<" return: "<< my_board.attackField(att, target) <<"\n";
+		my_board.print();
+		cout<<"\n\n";
+	}
+	// first ship destroyed board dead
+	att.y = 2;
+	for(long att_coor=2; att_coor <= 2+3-1; att_coor++){
+		att.x = att_coor;
+		cout<<"\n attack "<< att.y <<","<< att.x <<" return: "<< my_board.attackField(att, target) <<"\n";
+		my_board.print();
+		cout<<"\n\n";
+	}
+	// second ship destroyed board dead
+	
 	board_setup(my_board);
 	return 0;
 }

@@ -6,7 +6,7 @@
 
 namespace std {
 
-#define unk (1 << (32 - 2))
+#define unk UINT32_MAX/2
 #define water unk - 1
 #define avail_min water
 #define max_ships water - 2
