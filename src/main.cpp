@@ -165,9 +165,12 @@ void sendto_server(){
 
 	const char* msg = "Tegami";
 	size_t msg_length = strlen(msg);
-
-	result = sendto(sock, msg, msg_length, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
-
+	while(1){
+		result = sendto(sock, msg, msg_length+1, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
+		cout << ".";
+		cout.flush();
+		sleep(1);
+	}
 	cout << result << " bytes sent" << endl;
 }
 
