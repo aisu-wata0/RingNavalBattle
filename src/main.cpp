@@ -114,30 +114,68 @@ void read_from_client(){
 	addr_listener.sin_port = PORT;
 
 	// get socket
-	int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+	int sock = socket(AF_INET, SOCK_DGRAM, 0);
 
 	// bind listener
 	result = bind(sock, (sockaddr*)&addr_listener, sizeof(addr_listener));
 	if (result == -1){
 		int lasterror = errno;
-		cout << "error: " << lasterror;
+		cout << "error bind: " << lasterror;
 		exit(1);
 	}
 
 	// connect listener to dest
-	result = connect(sock, (sockaddr*)&addr_dest, sizeof(addr_dest));
-	if (result == -1){
-		int lasterror = errno;
-		cout << "error: " << lasterror;
-		exit(1);
-	}
+//	result = connect(sock, (sockaddr*)&addr_dest, sizeof(addr_dest));
+//	if (result == -1){
+//		int lasterror = errno;
+//		cout << "error connect: " << lasterror;
+//		exit(1);
+//	}
 	
 	char buf[1024];
-	int bytes = read(sock, buf, sizeof(buf));
 	
-	cout << "received " << bytes << "bytes\n";
+	while(1){
+		//int bytes = read(sock, buf, sizeof(buf));
+		unsigned slen = sizeof(sockaddr);
+		int bytes = recvfrom(sock, buf, sizeof(buf), 0, (sockaddr*)&addr_dest, &slen);
+		cout << "received " << bytes << "bytes:\n";
+		cout << buf << endl;
+	}
 	
 	close(sock);
+}
+
+void server_recvfrom(){
+	// datagram sockets and recvfrom()
+
+	struct addrinfo hints, *res;
+	int sockfd;
+	int byte_count;
+	socklen_t fromlen;
+	char buf[512];
+	char ipstr[INET6_ADDRSTRLEN];
+
+	// get host info, make socket, bind it to port PORT
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET;  // use IPv4
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_PASSIVE;
+	getaddrinfo(NULL, PORT_S, &hints, &res);
+	sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	bind(sockfd, res->ai_addr, res->ai_addrlen);
+	
+	// no need to accept(), just recvfrom():
+	sockaddr_in addr;
+	fromlen = sizeof addr;
+	while (1){
+	byte_count = recvfrom(sockfd, buf, sizeof buf, 0, (sockaddr*)&addr, &fromlen);
+
+	inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
+	printf("recv()'d %d bytes of data in buf\n", byte_count);
+	printf("from IP address %s\n", ipstr);
+	cout << buf <<endl;
+	
+	}
 }
 
 void sendto_server(){
@@ -174,5 +212,5 @@ void sendto_server(){
 
 int main(int argc, char **argv)
 {
-	sendto_server();
+	server_recvfrom();
 }
