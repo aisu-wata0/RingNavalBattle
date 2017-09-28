@@ -152,7 +152,7 @@ void server_recvfrom(){
 	int sockfd;
 	int byte_count;
 	socklen_t fromlen;
-	char buf[512];
+	Coord buf[512];
 	char ipstr[INET6_ADDRSTRLEN];
 
 	// get host info, make socket, bind it to port PORT
@@ -173,8 +173,7 @@ void server_recvfrom(){
 	inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
 	printf("recv()'d %d bytes of data in buf\n", byte_count);
 	printf("from IP address %s\n", ipstr);
-	cout << buf <<endl;
-	
+	cout << buf[0].y << buf[0].x <<endl;	
 	}
 }
 
