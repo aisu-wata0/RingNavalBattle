@@ -16,6 +16,13 @@
 #define PORT 9635
 #define PORT_S "9635"
 
+typedef struct {
+	int baton:1;
+	int status;
+	int dest;
+	int origin;
+} msg; // TODO
+
 int resolvehelper(const char* hostname, int family, const char* service, sockaddr_storage* pAddr)
 {
 	int result;
