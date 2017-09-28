@@ -93,58 +93,6 @@ void print_ascii(string filename){
 #include <stdlib.h>
 #include <iostream>
 
-void read_from_client(){
-	int result = 0;
-	
-//	sockaddr_in addr_dest = {};
-//	addr_dest.sin_family = AF_INET;
-//	addr_dest.sin_port = PORT;	
-	//inet_pton(AF_INET, "192.168.100.52", &(addr_dest.sin_addr));
-	
-	sockaddr_storage addr_dest = {};
-	result = resolvehelper("192.168.100.52", AF_INET, PORT_S, &addr_dest);
-	if (result == -1){
-		int lasterror = errno;
-		cout << "error: " << lasterror;
-		exit(1);
-	}
-
-	sockaddr_in addr_listener = {};
-	addr_listener.sin_family = AF_INET;
-	addr_listener.sin_port = PORT;
-
-	// get socket
-	int sock = socket(AF_INET, SOCK_DGRAM, 0);
-
-	// bind listener
-	result = bind(sock, (sockaddr*)&addr_listener, sizeof(addr_listener));
-	if (result == -1){
-		int lasterror = errno;
-		cout << "error bind: " << lasterror;
-		exit(1);
-	}
-
-	// connect listener to dest
-//	result = connect(sock, (sockaddr*)&addr_dest, sizeof(addr_dest));
-//	if (result == -1){
-//		int lasterror = errno;
-//		cout << "error connect: " << lasterror;
-//		exit(1);
-//	}
-	
-	char buf[1024];
-	
-	while(1){
-		//int bytes = read(sock, buf, sizeof(buf));
-		unsigned slen = sizeof(sockaddr);
-		int bytes = recvfrom(sock, buf, sizeof(buf), 0, (sockaddr*)&addr_dest, &slen);
-		cout << "received " << bytes << "bytes:\n";
-		cout << buf << endl;
-	}
-	
-	close(sock);
-}
-
 void server_recvfrom(){
 	// datagram sockets and recvfrom()
 
@@ -174,7 +122,6 @@ void server_recvfrom(){
 	printf("recv()'d %d bytes of data in buf\n", byte_count);
 	printf("from IP address %s\n", ipstr);
 	cout << buf <<endl;
-	
 	}
 }
 
@@ -194,17 +141,19 @@ void sendto_server(){
 	}
 
 	sockaddr_storage addr_dest = {};
-	result = resolvehelper("192.168.100.8", AF_INET, PORT_S, &addr_dest);
+	result = resolvehelper("10.254.225.10", AF_INET, PORT_S, &addr_dest);
 	if (result != 0){
 		int lasterror = errno;
 		cout << "error: " << lasterror;
 		exit(1);
 	}
-
-	const char* msg = "Tegami";
-	size_t msg_length = strlen(msg);
+	
+	Coord c;
+	c.y = 2;
+	c.x = 3;
+	
 	while(1){
-		result = sendto(sock, msg, msg_length+1, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
+		result = sendto(sock, msg, sizeof(Coord), 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
 		cout << ".";
 		cout.flush();
 		sleep(1);
@@ -215,5 +164,5 @@ void sendto_server(){
 
 int main(int argc, char **argv)
 {
-	server_recvfrom();
+	sendto_server();
 }
