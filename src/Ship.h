@@ -7,7 +7,7 @@
 namespace std {
 
 class Coord {
-	public:
+public:
 	long y,x;
 };
 

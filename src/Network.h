@@ -1,3 +1,6 @@
+#ifndef NETWORK_H
+#define NETWORK_H
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -12,6 +15,9 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <iostream>
+#include <stdio.h>
+
+#include "Ship.h"
 
 #define PORT 9635
 #define PORT_S "9635"
@@ -24,23 +30,47 @@
 
 #define status_ok 3
 
-typedef struct {
+namespace std{
+
+enum msg_type {msg_baton, msg_turn};
+	
+class msg {
+public:
 	int baton:1;
 	int status:2;
 	int dest;
 	int origin;
 	int content;
-} msg; // TODO
+	
+	msg(){}
+	
+	msg(msg_type type){
+		if(type == msg_baton){
+			baton = true;
+			content = 0;
+		}
+		if(type == msg_turn){
+			baton = true;
+			content = content_turn;
+		}
+	}
+};
 
-typedef struct {
+class coord_msg {
+public:
 	msg info;
 	Coord coord;
-} coord_msg;
+};
 
-typedef struct {
+class ship_msg {
+public:
 	msg info;
 	Ship ship;
-} ship_msg;
+};
+
+msg turn_msg(msg_turn);
+
+msg baton(msg_baton);
 
 int resolvehelper(const char* hostname, int family, const char* service, sockaddr_storage* pAddr)
 {
@@ -60,6 +90,7 @@ int resolvehelper(const char* hostname, int family, const char* service, sockadd
 }
 
 class RSocket {
+public:
 	struct addrinfo hints, *res;
 	int sockfd;
 	
@@ -76,7 +107,7 @@ class RSocket {
 		result = bind(sockfd, res->ai_addr, res->ai_addrlen);
 		if (result == -1){
 			int lasterror = errno;
-			cout << "error: " << lasterror;
+			cerr << "error: " << lasterror;
 		}
 	}
 	
@@ -85,11 +116,13 @@ class RSocket {
 		fromlen = sizeof(*p_addr);
 		return recvfrom(sockfd, buf, size, 0, (sockaddr*)p_addr, &fromlen);
 	}
-}
+};
 
 class SSocket {
-	sockaddr_in addr_listener
+public:
+	sockaddr_in addr_listener;
 	int sock;
+	sockaddr_storage addr_dest;
 	
 	SSocket(string hostname) {
 		int result = 0;
@@ -105,7 +138,7 @@ class SSocket {
 			cout << "error: " << lasterror;
 		}
 
-		sockaddr_storage addr_dest = {};
+		addr_dest = {};
 		result = resolvehelper(hostname.c_str(), AF_INET, PORT_S, &addr_dest);
 		if (result != 0){
 			int lasterror = errno;
@@ -116,27 +149,51 @@ class SSocket {
 	int send(void* buf, size_t size){
 		return sendto(sock, buf, size, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
 	}
-}
+};
 
-void send_msg(void* Tegami, size_t size){
-	char buf[BUFSIZ];
-	msg* response;
-	do {
-		next_player.send(&Tegami, size);
-		prev_player.rec(buf, BUFSIZ, &p_addr);
-		response = buf;
-	} while(response->info.status != 3 || response->info.origin != my_id);
-}
+class Connection {
+public:
+	SSocket next_player;
+	RSocket prev_player;
+	int my_id;
+	
+	Connection(int id, string next_hostname): 
+		next_player(next_hostname),
+		prev_player() {
+		my_id = id;
+	}
+	
+	void send_msg(void* Tegami, size_t size){
+		char buf[BUFSIZ];
+		msg* response;
+		sockaddr_in addr;
+		do {
+			next_player.send(&Tegami, size);
+			prev_player.rec(buf, BUFSIZ, &addr);
+			response = (msg*)buf;
+		} while(response->status != 3 || response->origin != my_id);
+	}
 
-void rec_msg(void* Tegami, size_t buf_size){
-	size_t msg_size;
-	msg_size = prev_player.rec(Tegami, buf_size, &p_addr);
-	// TODO: only if my message
-	((msg*)Tegami)->info.status = status_ok;
-	prev_player.send(Tegami, msg_size);
-}
+	void rec_msg(void* Tegami, size_t buf_size){
+		size_t msg_size;
+		sockaddr_in addr;
+		msg_size = prev_player.rec(Tegami, buf_size, &addr);
+		// TODO: only if my message
+		((msg*)Tegami)->status = status_ok;
+		next_player.send(Tegami, msg_size);
+	}
+	
+	void pass_turn(){
+		next_player.send(&turn_msg, sizeof(turn_msg));
+	}
+	
+	void pass_baton(){
+		next_player.send(&baton, sizeof(baton));
+	}
+};
 
-void pass_baton(){
-	msg baton = {.baton = true, .content = 0}
-	next_player.send(&baton, sizeof(baton));
-}
+
+
+}// namespace std
+
+#endif
