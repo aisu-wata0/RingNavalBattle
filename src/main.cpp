@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 	Ship ship_hit;
 	
 	vector<Board> enemies;
-	//map<int, Board> enemies;
+	//map<int, Board> enemies; // TODO: necessary to manage ids?
 	for (int i = 0; i < enemy_n; ++i){
 		enemies.push_back(Board(Coord{.y = board_max_y, .x = board_max_x}, numShips));
 	}
@@ -100,6 +100,12 @@ int main(int argc, char **argv)
 	cout << "Are you the first player? 1/0" << endl;
 	cin >> my_turn;
 	net.with_baton = my_turn;
+
+	if(my_turn){ // Debug
+		cout<< "it's your turn" << endl;
+	}else{
+		cout<< "standby" << endl;
+	}
 	
 	while(!game_ended){
 		if(my_turn){
