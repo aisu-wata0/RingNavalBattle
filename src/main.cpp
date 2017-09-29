@@ -93,7 +93,11 @@ int main(int argc, char **argv)
 	
 	print_game(my_board, enemies);
 	
-	Connection net(1, "i8");
+	cout << "what is the hostname of the next player?" << endl;
+	string host;
+	cin >> host;
+	Connection net(1, host);
+	
 	bool has_response = false;
 	bool game_ended = false;
 	bool my_turn = false;
