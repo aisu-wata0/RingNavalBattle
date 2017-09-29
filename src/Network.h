@@ -55,70 +55,63 @@ int resolvehelper(const char* hostname, int family, const char* service, sockadd
 	return result;
 }
 
-void server_recvfrom(){
-	// datagram sockets and recvfrom()
-
+class RSocket {
 	struct addrinfo hints, *res;
 	int sockfd;
-	int byte_count;
-	socklen_t fromlen;
-	Coord buf[512];
-	char ipstr[INET6_ADDRSTRLEN];
-
-	// get host info, make socket, bind it to port PORT
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET;  // use IPv4
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_PASSIVE;
-	getaddrinfo(NULL, PORT_S, &hints, &res);
-	sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	bind(sockfd, res->ai_addr, res->ai_addrlen);
 	
-	// no need to accept(), just recvfrom():
-	sockaddr_in addr;
-	fromlen = sizeof addr;
-	while (1){
-		byte_count = recvfrom(sockfd, buf, sizeof buf, 0, (sockaddr*)&addr, &fromlen);
-
-		inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
-		printf("recv()'d %d bytes of data in buf\n", byte_count);
-		printf("from IP address %s\n", ipstr);
-		cout << buf[0].y << buf[0].x <<endl;
+	RSocket() {
+		int result = 0;
+		// get host info, make socket, bind it to port PORT
+		hints = {};
+		hints.ai_family = AF_INET;  // use IPv4
+		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_flags = AI_PASSIVE;
+		
+		getaddrinfo(NULL, PORT_S, &hints, &res);
+		sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		result = bind(sockfd, res->ai_addr, res->ai_addrlen);
+		if (result == -1){
+			int lasterror = errno;
+			cout << "error: " << lasterror;
+		}
+	}
+	
+	int rec(void* buf, size_t size, sockaddr_in* p_addr){
+		socklen_t fromlen;
+		fromlen = sizeof(*p_addr);
+		return recvfrom(sockfd, buf, size, 0, (sockaddr*)p_addr, &fromlen);
 	}
 }
 
-void sendto_server(){
-	int result = 0;
-	int sock = socket(AF_INET, SOCK_DGRAM, 0);
+class SSocket {
+	sockaddr_in addr_listener
+	int sock;
+	
+	SSocket(string hostname) {
+		int result = 0;
+		sock = socket(AF_INET, SOCK_DGRAM, 0);
 
-	sockaddr_in addr_listener = {};
-	addr_listener.sin_family = AF_INET;
-	addr_listener.sin_port = PORT;
-	
-	result = bind(sock, (sockaddr*)&addr_listener, sizeof(addr_listener));
-	if (result == -1){
-		int lasterror = errno;
-		cout << "error: " << lasterror;
-		exit(1);
-	}
+		addr_listener = {};
+		addr_listener.sin_family = AF_INET;
+		addr_listener.sin_port = PORT;
+		
+		result = bind(sock, (sockaddr*)&addr_listener, sizeof(addr_listener));
+		if (result == -1){
+			int lasterror = errno;
+			cout << "error: " << lasterror;
+		}
 
-	sockaddr_storage addr_dest = {};
-	result = resolvehelper("10.254.225.10", AF_INET, PORT_S, &addr_dest);
-	if (result != 0){
-		int lasterror = errno;
-		cout << "error: " << lasterror;
-		exit(1);
+		sockaddr_storage addr_dest = {};
+		result = resolvehelper(hostname.c_str(), AF_INET, PORT_S, &addr_dest);
+		if (result != 0){
+			int lasterror = errno;
+			cout << "error: " << lasterror;
+		}
 	}
 	
-	Coord c;
-	c.y = 2;
-	c.x = 3;
-	
-	while(1){
-		result = sendto(sock, msg, sizeof(Coord), 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
-		cout << ".";
-		cout.flush();
-		sleep(1);
+	int send(void* buf, size_t size, sockaddr_in* p_addr){
+		socklen_t fromlen = sizeof(*p_addr);
+		
+		return sendto(sock, msg, sizeof(Coord), 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
 	}
-	cout << result << " bytes sent" << endl;
 }
