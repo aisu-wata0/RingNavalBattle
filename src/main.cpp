@@ -13,22 +13,22 @@ using namespace std;
 void board_setup(Board& board, long numShips){
 	Ship newShip;
 	
-	cout << "Taishou, This is our advanced technology map of the highest precision, the top left coordinate is (0,0) (y,x)\n";
+	cout << "Taichou, This is our advanced technology map of the highest precision, the top left coordinate is (0,0) (y,x)\n";
 	board.print();
 	cout << "You have " << numShips << " to dispatch.\n";
 	string confirmed("n");
 	while(confirmed != "y"){
 		board.set_board(water);
 		for(long i = 0; i < numShips; i++){
-			cout << "What will be the coord for the top left (y, x) of the ship #" << i << " Taishou?\n";
+			cout << "What will be the coord for the top left (y x) of the ship #" << i << " taichou?\n";
 			cin >> newShip.top_left.y >> newShip.top_left.x;
 		
-			cout << "And how about the height and width of the ship #" << i+1 << " Taishou?\n";
+			cout << "And how about the height and width of the ship #" << i+1 << " taichou?\n";
 			cin >> newShip.height >> newShip.width;
 			
 			if(board.set_ship(newShip) == FAIL){
 				i--;
-				cout << "You can't set up a ship like that! Try again but pay more attention this time Taishou!\n";
+				cout << "You can't set up a ship like that! Try again but pay more attention this time taichou!\n";
 			}
 			board.print();
 		}
@@ -62,6 +62,11 @@ void pass_turn(){
 	next_player.send(msg {.baton = true, .content = content_turn});
 }
 
+void read_attack(Coord& pos){
+	cout << "Were will you attack next taichou? (y x)";
+	cin >> pos.y >> pos.x;
+}
+
 int main(int argc, char **argv)
 {
 	//print_ascii("../content/amatsukaze-pc160.txt");
@@ -78,13 +83,14 @@ int main(int argc, char **argv)
 	
 	queue tegami_queue;
 	
-	Board my_board(1, Coord{.y = board_max_y, .x = board_max_x});
+	Board my_board(Coord{.y = board_max_y, .x = board_max_x});
 	Ship ship_hit;
 	
 	vector<Board> enemies;
 	//map<int, Board> enemies;
-	for (int i = 0; i < enemy_n; ++i)
-		enemies.push_back(enemy(Coord{.y = board_max_y, .x = board_max_x}, numShips));
+	for (int i = 0; i < enemy_n; ++i){
+		enemies.push_back(Coord{.y = board_max_y, .x = board_max_x}, numShips);
+	}
 
 	board_setup(my_board, numShips);
 	
@@ -98,8 +104,8 @@ int main(int argc, char **argv)
 			if(ship_n > 0){
 				sockaddr_in p_addr;
 				coord_msg attack_msg;
-				//read_attack();
-				cin >> attack_msg.coord.y >> attack_msg.coord.x;
+				
+				read_attack(attack_msg.coord);
 				
 				attack_msg.info.baton = false;
 				attack_msg.info.status = 0;
