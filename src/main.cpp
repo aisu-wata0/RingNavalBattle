@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <queue>
 
 #include "Ship.h"
 #include "Board.h"
@@ -52,117 +53,81 @@ void print_ascii(string filename){
 	in_f.close();
 }
 
-//int main(int argc, char **argv)
-//{
-//	//print_ascii("../content/amatsukaze-pc160.txt");
-//	
-//	Board my_board(Coord{.y = 5, .x = 5}, MINE);
-//	Ship target;
-//
-//	board_setup(my_board);
-//	my_board.print();
-//	
-//	Coord att;
-//	att.x = 0;
-//	
-//	for(long att_coor=0; att_coor <= 2; att_coor++){
-//		for(long att_cory=0; att_cory <= 2; att_cory++){
-//			att.y = att_cory;
-//			att.x = att_coor;
-//			cout<<"\n attack "<< att.y <<","<< att.x <<" return: "<< my_board.attackField(att, target) <<"\n";
-//			my_board.print();
-//			cout<<"\n\n";
-//		}
-//	}
-//	
-//	return 0;
-//}
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <memory.h>
-#include <ifaddrs.h>
-#include <net/if.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <iostream>
-
-void server_recvfrom(){
-	// datagram sockets and recvfrom()
-
-	struct addrinfo hints, *res;
-	int sockfd;
-	int byte_count;
-	socklen_t fromlen;
-	Coord buf[512];
-	char ipstr[INET6_ADDRSTRLEN];
-
-	// get host info, make socket, bind it to port PORT
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET;  // use IPv4
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_PASSIVE;
-	getaddrinfo(NULL, PORT_S, &hints, &res);
-	sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	bind(sockfd, res->ai_addr, res->ai_addrlen);
+void print_game(Board my_board, vector<Board> enemies){
+	my_board.print();
 	
-	// no need to accept(), just recvfrom():
-	sockaddr_in addr;
-	fromlen = sizeof addr;
-	while (1){
-		byte_count = recvfrom(sockfd, buf, sizeof buf, 0, (sockaddr*)&addr, &fromlen);
-
-		inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
-		printf("recv()'d %d bytes of data in buf\n", byte_count);
-		printf("from IP address %s\n", ipstr);
-		cout << buf[0].y << buf[0].x <<endl;
-	}
+	for (int i = 0; i < enemies.size(); ++i)
+		cout << "Player " << i << endl;
+		enemies.at(i).print();
 }
-
-void sendto_server(){
-	int result = 0;
-	int sock = socket(AF_INET, SOCK_DGRAM, 0);
-
-	sockaddr_in addr_listener = {};
-	addr_listener.sin_family = AF_INET;
-	addr_listener.sin_port = PORT;
-	
-	result = bind(sock, (sockaddr*)&addr_listener, sizeof(addr_listener));
-	if (result == -1){
-		int lasterror = errno;
-		cout << "error: " << lasterror;
-		exit(1);
-	}
-
-	sockaddr_storage addr_dest = {};
-	result = resolvehelper("10.254.225.10", AF_INET, PORT_S, &addr_dest);
-	if (result != 0){
-		int lasterror = errno;
-		cout << "error: " << lasterror;
-		exit(1);
-	}
-	
-	Coord c;
-	c.y = 2;
-	c.x = 3;
-	
-	while(1){
-		result = sendto(sock, msg, sizeof(Coord), 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
-		cout << ".";
-		cout.flush();
-		sleep(1);
-	}
-	cout << result << " bytes sent" << endl;
-}
-
 
 int main(int argc, char **argv)
 {
-	sendto_server();
+	//print_ascii("../content/amatsukaze-pc160.txt");
+	int enemy_n = 3;
+	long board_max_y = 5;
+	long board_max_x = 5;
+	
+	queue tegami_queue;
+	
+	Board my_board(Coord{.y = board_max_y, .x = board_max_x}, Mine);
+	
+	vector<Board> enemies;
+	for (int i = 0; i < enemy_n; ++i)
+		enemies.push_back(enemy(Coord{.y = board_max_y, .x = board_max_x}, Enemy));
+	
+	Ship target;
+
+	board_setup(my_board);
+	
+	print_game(my_board, enemies);
+
+	while(!game_ended){
+		if(my_turn){
+			read_attack();
+			
+			msg_queue.push_back(attack_msg);
+			
+			wait_attack_resolution();
+			
+			process_attack();
+			
+			pass_turn();
+		} else {
+			if (with_baton){
+				while(msg_queue.size() > 0){
+					send_msg(msg_queue.front());
+					msg_queue.pop_front();
+				}
+			}else{
+				receive_msgs(&Tegami);
+
+				// Message for me
+				if(Tegami.info.dest == my_id){
+					with_baton = Tegami.info.baton;
+					
+					if(Tegami.info.content == content_attack){
+						// calculate hit
+						// ...
+						if(ship_hp > 0){
+							msg_queue.push_back(hit_msg);
+						} else {
+							for(int i=0; i < enemies.size(); i++){
+								ship_destroyed_msg.info.dest = enemies.at(i).player;
+								msg_queue.push_back(ship_destroyed_msg);
+							}
+						}
+					}
+				}
+				// don't send forward baton msgs
+				if(!with_baton){
+					Tegami.info.status = true;
+					send_msg(Tegami);
+				}
+			}
+			
+		}
+	}
+	
+	return 0;
 }
