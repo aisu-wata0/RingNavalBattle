@@ -58,7 +58,7 @@ void print_game(Board my_board, vector<Board> enemies){
 		enemies.at(i).print();
 }
 
-void pass_turn(){
+void pass_turn(SSocket next_player){
 	next_player.send(msg {.baton = true, .content = content_turn});
 }
 
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 	
 	while(!game_ended){
 		if(my_turn){
-			if(ship_n > 0){
+			if(my_board.ship_n > 0){
 				sockaddr_in p_addr;
 				coord_msg attack_msg;
 				
@@ -118,7 +118,6 @@ int main(int argc, char **argv)
 				
 				pass_baton();
 				
-				//wait_attack_response();
 				ship_msg* response_ship;
 				coord_msg* response_hit;
 				
@@ -126,9 +125,10 @@ int main(int argc, char **argv)
 				
 				//process_attack();
 				if(((msg*)buf)->info.content == content_hit){
+					//msg containing hit data
 					response_hit = buf;
 					
-					enemies.at(0).at(response_hit->coord).hit = true;
+					enemies.at(0).at(response_hit->coord).hit = true;	
 					if( available(enemies.at(0).at(response_hit->coord).idn) ){
 						enemies.at(0).at(response_hit->coord).idn = unk_ship;
 					}
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 			}
 			
 			pass_turn();
-		} else {
+		} else {	//not my turn
 			if (with_baton){
 				while(has_response){
 					//send_msg(msg_queue.front());
@@ -154,10 +154,9 @@ int main(int argc, char **argv)
 				msg_size = prev_player.rec(buf, BUFSIZ, &p_addr);
 
 				coord_msg* attack_msg;
-				coord_msg* attack_msg;
-				
+			
 				// Message for me
-				if(((msg*)buf)->info.dest == my_id || (msg*)buf)->info.baton){
+				if(((msg*)buf)->info.dest == my_id || ((msg*)buf)->info.baton){
 					(msg*)buf)->info.status = status_ok;
 					with_baton = (msg*)buf)->info.baton;
 					
@@ -184,7 +183,7 @@ int main(int argc, char **argv)
 							}
 							//msg_queue.push_back(hit_msg);
 						}
-					} else if (((msg*)buf)->info.content == content_turn){
+					} else if (((msg*)buf)->info.content == content_turn){	//turn
 						my_turn = true;
 					}
 				}
