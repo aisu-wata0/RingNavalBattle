@@ -72,6 +72,8 @@ msg turn_msg(msg_turn);
 
 msg baton(msg_baton);
 
+char ipstr[INET6_ADDRSTRLEN];
+
 int resolvehelper(const char* hostname, int family, const char* service, sockaddr_storage* pAddr)
 {
 	int result;
@@ -114,7 +116,13 @@ public:
 	int rec(void* buf, size_t size, sockaddr_in* p_addr){
 		socklen_t fromlen;
 		fromlen = sizeof(*p_addr);
-		return recvfrom(sockfd, buf, size, 0, (sockaddr*)p_addr, &fromlen);
+		int byte_count = recvfrom(sockfd, buf, size, 0, (sockaddr*)p_addr, &fromlen);
+		
+		inet_ntop(AF_INET, &(p_addr->sin_addr), ipstr, INET6_ADDRSTRLEN);
+		printf("recvd %d bytes of data in buf\n", byte_count);
+		printf("from IP address %s\n", ipstr);
+		
+		return byte_count;
 	}
 };
 
@@ -147,6 +155,10 @@ public:
 	}
 	
 	int send(void* buf, size_t size){
+		sockaddr_in addr = *((sockaddr_in*)&addr_dest);
+		inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
+		printf("sent %d bytes of data in buf\n", size);
+		printf("to IP address %s\n", ipstr);
 		return sendto(sock, buf, size, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
 	}
 };
@@ -171,18 +183,25 @@ public:
 		sockaddr_in addr;
 		do {
 			next_player.send(&Tegami, size);
+			cout << "sent msg to next_player" << endl;
 			prev_player.rec(buf, BUFSIZ, &addr);
+			
+			cout << "received message from prev_player" << endl;
 			response = (msg*)buf;
 		} while(response->status != 3 || response->origin != my_id);
 	}
 
 	void rec_msg(void* Tegami, size_t buf_size){
-		size_t msg_size;
+		size_t msg_size = 0;
 		sockaddr_in addr;
-		msg_size = prev_player.rec(Tegami, buf_size, &addr);
-		// TODO: only if my message
-		((msg*)Tegami)->status = status_ok;
-		next_player.send(Tegami, msg_size);
+		do { 
+			msg_size = prev_player.rec(Tegami, buf_size, &addr);
+			cout << "received tegami" << endl;
+			// TODO: only if my message
+			((msg*)Tegami)->status = status_ok;
+			next_player.send(Tegami, msg_size);
+			cout << "sent tegami confirmed" << endl;
+		} while (msg_size == 0);
 	}
 	
 	void pass_turn(){

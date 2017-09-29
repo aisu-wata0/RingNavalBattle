@@ -60,7 +60,7 @@ void print_game(Board my_board, vector<Board> enemies){
 }
 
 void read_attack(Coord& pos){
-	cout << "Were will you attack next taichou? (y x)";
+	cout << "Were will you attack next taichou? (y x)" << endl;
 	cin >> pos.y >> pos.x;
 }
 
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 	
 	print_game(my_board, enemies);
 	
-	Connection net(1, "h55");
+	Connection net(1, "i8");
 	bool has_response = false;
 	bool game_ended = false;
 	bool my_turn = false;
