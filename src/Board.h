@@ -20,12 +20,16 @@ namespace std {
 #define unk_ship water - 1
 #define max_ships water - 2
 
+#define FAIL -1
+
 typedef struct {
 	uint32_t hit:1;
 	uint32_t idn:32 -1;
 } Spot;
 
-#define FAIL -1
+bool available(Spot sp){
+	return sp.idn >= avail_min; // unk or water
+}
 
 Spot unk_def = {.hit = false, .idn = unk};
 
@@ -75,10 +79,6 @@ class Board {
 				this->at(i,j).hit = false;
 			}
 		}
-	}
-	
-	bool available(Spot sp){
-		return sp.idn >= avail_min; // unk or water
 	}
 
 	int set_destroyed_ship(Ship ship){
