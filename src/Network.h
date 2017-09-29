@@ -17,8 +17,12 @@
 #define PORT_S "9635"
 
 #define content_attack 1
-#define content_hit 2
+#define content_turn 2
 #define content_ship_destroyed 3
+#define content_hit 4
+#define content_miss 5
+
+#define status_ok 3
 
 typedef struct {
 	int baton:1;
@@ -109,9 +113,30 @@ class SSocket {
 		}
 	}
 	
-	int send(void* buf, size_t size, sockaddr_in* p_addr){
-		socklen_t fromlen = sizeof(*p_addr);
-		
-		return sendto(sock, msg, sizeof(Coord), 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
+	int send(void* buf, size_t size){
+		return sendto(sock, buf, size, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
 	}
+}
+
+void send_msg(void* Tegami, size_t size){
+	char buf[BUFSIZ];
+	msg* response;
+	do {
+		next_player.send(&Tegami, size);
+		prev_player.rec(buf, BUFSIZ, &p_addr);
+		response = buf;
+	} while(response->info.status != 3 || response->info.origin != my_id);
+}
+
+void rec_msg(void* Tegami, size_t buf_size){
+	size_t msg_size;
+	msg_size = prev_player.rec(Tegami, buf_size, &p_addr);
+	// TODO: only if my message
+	((msg*)Tegami)->info.status = status_ok;
+	prev_player.send(Tegami, msg_size);
+}
+
+void pass_baton(){
+	msg baton = {.baton = true, .content = 0}
+	next_player.send(&baton, sizeof(baton));
 }

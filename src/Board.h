@@ -16,6 +16,8 @@ namespace std {
 #define unk UINT32_MAX/2
 #define water unk - 1
 #define avail_min water
+
+#define unk_ship water - 1
 #define max_ships water - 2
 
 typedef struct {
@@ -24,7 +26,6 @@ typedef struct {
 } Spot;
 
 #define FAIL -1
-#define board_dead -2
 
 Spot unk_def = {.hit = false, .idn = unk};
 
@@ -38,16 +39,22 @@ class Board {
 	int player;
 	vector<Spot> sea;
 	
-	Board(Coord sea_max, int posession): posession(posession), sea(sea_max.y*sea_max.x){
+	Board(Coord sea_max): sea(sea_max.y*sea_max.x){
 		this->sea_max.y = sea_max.y;
 		this->sea_max.x = sea_max.x;
 		ship_max = 0;
 		ship_n = 0;
-		if(posession == Mine){
-			this->set_board(water);
-		} else {
-			this->set_board(unk);
-		}
+		posession = Mine;
+		this->set_board(water);
+	}
+	
+	Board(Coord sea_max, int ship_max): sea(sea_max.y*sea_max.x){
+		this->sea_max.y = sea_max.y;
+		this->sea_max.x = sea_max.x;
+		this->ship_max = ship_max;
+		ship_n = ship_max;
+		posession = Enemy;
+		this->set_board(unk);
 	}
 	
 	Spot& at(long y, long x){
@@ -74,6 +81,24 @@ class Board {
 		return sp.idn >= avail_min; // unk or water
 	}
 
+	int set_destroyed_ship(Ship ship){
+		int ship_id = ship_n;
+		
+		ship_n--;
+		
+		if(ship.not_exist(sea_max)){
+			return FAIL;
+		}
+		
+		for(long k = ship.top_left.y; k <= ship.bot_right().y; k++){
+			for(long l = ship.top_left.x; l <= ship.bot_right().x; l++){
+				this->at(k,l).idn = ship_id;
+				this->at(k,l).hit = true;
+			}
+		}
+		return true;
+	}
+	
 	int set_ship(Ship ship){
 		if(ship_max >= max_ships){
 			return FAIL;
@@ -195,9 +220,6 @@ class Board {
 			
 			if((ship_hp = get_ship(pos, ship)) == 0){
 				ship_n--;
-				if(ship_n == 0){
-					return board_dead;
-				}
 			}
 			return ship_hp;
 		}
