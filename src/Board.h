@@ -13,11 +13,29 @@
 
 namespace std {
 
+#define unk UINT32_MAX/2
+#define water unk - 1
+#define avail_min water
+#define max_ships water - 2
+
+typedef struct {
+	uint32_t hit:1;
+	uint32_t idn:32 -1;
+} Spot;
+
+#define FAIL -1
+#define board_dead -2
+
+Spot unk_def = {.hit = false, .idn = unk};
+
+enum board_type {Mine, Enemy};
+
 class Board {
 	public:
 	Coord sea_max;
-	int posession;
+	board_type posession;
 	int ship_n, ship_max;
+	int player;
 	vector<Spot> sea;
 	
 	Board(Coord sea_max, int posession): posession(posession), sea(sea_max.y*sea_max.x){
@@ -25,7 +43,7 @@ class Board {
 		this->sea_max.x = sea_max.x;
 		ship_max = 0;
 		ship_n = 0;
-		if(posession == MINE){
+		if(posession == Mine){
 			this->set_board(water);
 		} else {
 			this->set_board(unk);

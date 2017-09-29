@@ -6,23 +6,6 @@
 
 namespace std {
 
-#define unk UINT32_MAX/2
-#define water unk - 1
-#define avail_min water
-#define max_ships water - 2
-
-typedef struct {
-	uint32_t hit:1;
-	uint32_t idn:32 -1;
-}Spot;
-
-#define MINE 0
-#define ENEMIES 1
-#define FAIL -1
-#define board_dead -2
-
-Spot unk_def = {.hit = false, .idn = unk};
-
 class Coord {
 	public:
 	long y,x;
