@@ -56,11 +56,11 @@ public:
 	}
 	
 	void print(){
-		cout << "baton:1;" << baton << endl;
-		cout << "status:2;" << status << endl;
-		cout << "dest;" << dest << endl;
-		cout << "origin;" << origin << endl;
-		cout << "content;" << content << endl;
+		cout << "baton: " << baton << endl;
+		cout << "status: " << status << endl;
+		cout << "dest: " << dest << endl;
+		cout << "origin: " << origin << endl;
+		cout << "content: " << content << endl;
 	}
 };
 
@@ -139,11 +139,13 @@ public:
 	sockaddr_in addr_listener;
 	int sock;
 	sockaddr_storage addr_dest;
+	string hostname;
 	
 	SSocket(string hostname) {
+		this->hostname = hostname;
 		int result = 0;
 		sock = socket(AF_INET, SOCK_DGRAM, 0);
-
+	
 		addr_listener = {};
 		addr_listener.sin_family = AF_INET;
 		addr_listener.sin_port = PORT;
@@ -213,14 +215,20 @@ public:
 		} while (msg_size == 0);
 	}
 	
-	void pass_turn(){
+	void pass_turn(bool& my_turn){
 		clog << "passing turn" << endl;
+		my_turn = false;
 		next_player.send(&turn_msg, sizeof(turn_msg));
 	}
 	
 	void pass_baton(){
 		clog << "passing baton" << endl;
+		with_baton = false;
 		next_player.send(&baton, sizeof(baton));
+	}
+	
+	bool is_this_for_me(msg* tegami){
+		return (tegami->dest == my_id) || tegami->baton;
 	}
 };
 
