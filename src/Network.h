@@ -195,7 +195,7 @@ public:
 			prev_player.rec(buf, BUFSIZ, &addr);
 			response = (msg*)buf;
 			response->print();
-		} while(response->status != 3 || response->origin != my_id);
+		} while(response->status != status_ok || response->origin != my_id);
 		clog << "player " << response->dest << "received msg" << endl;
 	}
 
