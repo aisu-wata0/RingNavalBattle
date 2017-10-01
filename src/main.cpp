@@ -72,8 +72,8 @@ int main(int argc, char **argv)
 	long board_max_x = 5;
 	int numShips = 2;
 	
-	int c, pID;
-	string host;
+	int c, my_id;
+	string next_hostname;
 	ifstream in_f;
 	ofstream o_f;
 	streambuf* coutbuf = cout.rdbuf(); //save old buf; 
@@ -81,17 +81,16 @@ int main(int argc, char **argv)
 	while (( c = getopt(argc, argv, "p:n:")) != -1){
 		switch (c){
 			case 'p':
-				pID = optarg;
+				my_id = optarg;
 				break;
 			case 'h':
-				host = optarg;
+				next_hostname = optarg;
 				break;
 			case ':':
 			// missing option argument
 				fprintf(stderr, "%s: option '-%c' requires an argument\n", argv[0], optopt);
-				break;
 			default:
-				fprintf(stderr, "Usage: %s -p player -n nextMachine", argv[0]);
+				fprintf(stderr, "Usage: %s -p player_order -n next_hostname\n", argv[0]);
 				exit(EXIT_FAILURE);
 		}
 	}
@@ -116,18 +115,17 @@ int main(int argc, char **argv)
 	
 	print_game(my_board, enemies);
 	
-	Connection net(pID, host); // TODO: real ids
+	Connection net(my_id, next_hostname); // TODO: real ids
 	
 	bool has_response = false;
 	bool game_ended = false;
-	bool my_turn = false;
-	cout << "Are you the first player? 1/0" << endl;
-	cin >> my_turn;
-	net.with_baton = my_turn;
+	bool my_turn;
 
-	if(my_turn){ // Debug
+	if(net.my_id == 1){
+		my_turn = true;
 		cout<< "it's your turn" << endl;
 	}else{
+		my_turn = false;
 		cout<< "standby" << endl;
 	}
 	
