@@ -72,6 +72,30 @@ int main(int argc, char **argv)
 	long board_max_x = 5;
 	int numShips = 2;
 	
+	int c, pID;
+	string host;
+	ifstream in_f;
+	ofstream o_f;
+	streambuf* coutbuf = cout.rdbuf(); //save old buf; 
+	
+	while (( c = getopt(argc, argv, "p:n:")) != -1){
+		switch (c){
+			case 'p':
+				pID = optarg;
+				break;
+			case 'h':
+				host = optarg;
+				break;
+			case ':':
+			// missing option argument
+				fprintf(stderr, "%s: option '-%c' requires an argument\n", argv[0], optopt);
+				break;
+			default:
+				fprintf(stderr, "Usage: %s -p player -n nextMachine", argv[0]);
+				exit(EXIT_FAILURE);
+		}
+	}
+
 	char buf[BUFSIZ];
 	
 	sockaddr_in p_addr;
@@ -92,10 +116,7 @@ int main(int argc, char **argv)
 	
 	print_game(my_board, enemies);
 	
-	cout << "what is the hostname of the next player?" << endl;
-	string host;
-	cin >> host;
-	Connection net(1, host); // TODO: real ids
+	Connection net(pID, host); // TODO: real ids
 	
 	bool has_response = false;
 	bool game_ended = false;
