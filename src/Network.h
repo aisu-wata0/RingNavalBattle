@@ -184,7 +184,7 @@ public:
 		next_player(next_hostname),
 		prev_player() {
 		my_id = id;
-		with_baton = false;
+		with_baton = (my_id == 1);
 	}
 	
 	void send_msg(void* Tegami, size_t size){
@@ -200,7 +200,7 @@ public:
 		} while(response->status != status_ok || response->origin != my_id);
 		clog << "player " << response->dest << "received msg" << endl;
 	}
-
+	
 	void rec_msg(void* Tegami, size_t buf_size){
 		size_t msg_size = 0;
 		sockaddr_in addr;
