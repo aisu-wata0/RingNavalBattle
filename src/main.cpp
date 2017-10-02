@@ -180,9 +180,9 @@ int main(int argc, char **argv)
 					// msg containing hit data
 					response_hit = (coord_msg*)buf;
 					
-					enemies.at(0).at(response_hit->coord).hit = true;	
-					if( available(enemies.at(0).at(response_hit->coord)) ){
-						enemies.at(0).at(response_hit->coord).idn = unk_ship;
+					enemies.at(0).at(attack_msg.coord).hit = true;	
+					if( available(enemies.at(0).at(attack_msg.coord)) ){
+						enemies.at(0).at(attack_msg.coord).idn = unk_ship;
 					}
 					
 				} else if (((msg*)buf)->content ==  content_ship_destroyed){
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 						cout << "Player at ID has been annihilated, who will be next?\n";
 					}
 				} else {
-					cout <<  "you missed!" << endl;
+					cout << "you missed!" << endl;
 				}
 				cout << "enemy map\n";
 				enemies.at(0).print();
@@ -232,13 +232,16 @@ int main(int argc, char **argv)
 					
 					if( ((msg*)buf)->content == content_attack ){
 						cout << "We got attacked" << endl;
-						has_response = true;
 						attack_msg = (coord_msg*)buf;
+						
+						has_response = true;
+						*((coord_msg*)msg_to_send) = *(coord_msg*)&nil_msg;
+						((coord_msg*)msg_to_send)->info.dest = attack_msg->info.origin;
+						((coord_msg*)msg_to_send)->info.origin = net.my_id;
+						
 						// calculate hit
 						int ship_hp = my_board.attackField(attack_msg->coord, ship_hit);
 						
-						((coord_msg*)msg_to_send)->info.dest = attack_msg->info.origin;
-						((coord_msg*)msg_to_send)->info.origin = net.my_id;
 						if(ship_hp == 0){
 							cout << "They destroyed our ship!" << endl;
 							msg_to_send_size = sizeof(ship_msg);
