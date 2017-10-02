@@ -210,7 +210,7 @@ public:
 			response = (msg*)buf;
 			print(response);
 		} while(response->status != status_ok || response->origin != my_id);
-		clog << "player " << (int)response->dest << "received msg" << endl;
+		clog << "player " << (int)response->dest << " received msg" << endl;
 	}
 	
 	void rec_msg(void* Tegami, size_t buf_size){
