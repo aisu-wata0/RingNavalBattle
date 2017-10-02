@@ -22,11 +22,12 @@
 #define PORT 9635
 #define PORT_S "9635"
 
-#define content_attack 1
-#define content_turn 2
-#define content_ship_destroyed 3
-#define content_hit 4
-#define content_miss 5
+#define content_miss 3
+#define content_attack 4
+#define content_ship_destroyed 5
+#define content_turn 7
+#define content_hit 8
+
 
 #define status_ok 3
 
@@ -34,51 +35,49 @@ namespace std{
 
 enum msg_type {msg_baton, msg_turn};
 	
-class msg {
-public:
-	int8_t baton:1;
-	int8_t status:2;
+typedef struct {
+	int8_t baton;
+	int8_t status;
 	int8_t dest;
 	int8_t origin;
-	int8_t content;
-	
-	msg(){}
-	
-	msg(msg_type type){
-		if(type == msg_baton){
-			baton = true;
-			content = 0;
-		}
-		if(type == msg_turn){
-			baton = true;
-			content = content_turn;
-		}
-	}
-	
-	void print(){
-		cout << "baton: " << (int)baton << endl;
-		cout << "status: " << (int)status << endl;
-		cout << "dest: " << (int)dest << endl;
-		cout << "origin: " << (int)origin << endl;
-		cout << "content: " << (int)content << endl;
-	}
-};
+	int8_t content;	
+} msg;
 
-class coord_msg {
-public:
+msg new_msg(msg_type type){
+	msg Tegami;
+	if(type == msg_baton){
+		Tegami.baton = true;
+		Tegami.content = 0;
+	}
+	if(type == msg_turn){
+		Tegami.baton = true;
+		Tegami.content = content_turn;
+	}
+	return Tegami;
+}
+
+void print(msg* Tegami){
+	clog
+	<< "baton: " << (int)Tegami->baton
+	<< ";\tstatus: " << (int)Tegami->status
+	<< ";\tdest: " << (int)Tegami->dest
+	<< ";\torigin: " << (int)Tegami->origin
+	<< ";\tcontent: " << (int)Tegami->content << endl;
+}
+
+typedef struct {
 	msg info;
 	Coord coord;
-};
+} coord_msg;
 
-class ship_msg {
-public:
+typedef struct {
 	msg info;
 	Ship ship;
-};
+} ship_msg;
 
-msg turn_msg(msg_turn);
+msg turn_msg = new_msg(msg_turn);
 
-msg baton(msg_baton);
+msg baton =  new_msg(msg_baton);
 
 char ipstr[INET6_ADDRSTRLEN];
 
@@ -125,16 +124,9 @@ public:
 		socklen_t fromlen;
 		fromlen = sizeof(*p_addr);
 		int byte_count = recvfrom(sockfd, buf, size, 0, (sockaddr*)p_addr, &fromlen);
-		((msg*)buf)->print();
-		
-		cout << "baton: " << (int)((msg*)buf)->baton << endl;
-		cout << "status: " << (int)((msg*)buf)->status << endl;
-		cout << "dest: " << (int)((msg*)buf)->dest << endl;
-		cout << "origin: " << (int)((msg*)buf)->origin << endl;
-		cout << "content: " << (int)((msg*)buf)->content << endl;
 		
 		inet_ntop(AF_INET, &(p_addr->sin_addr), ipstr, INET6_ADDRSTRLEN);
-		clog <<"recvd "<< byte_count <<"bytes ";
+		clog <<"recvd "<< byte_count <<" bytes ";
 		clog <<"from IP: "<< ipstr << endl;
 		
 		return byte_count;
@@ -174,8 +166,11 @@ public:
 	int send(void* buf, size_t size){
 		sockaddr_in addr = *((sockaddr_in*)&addr_dest);
 		inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
+		
 		clog <<"sent "<< size <<" bytes of data ";
-		clog <<"to IP: "<< ipstr <<endl;
+		clog <<"to IP: "<< ipstr <<endl; 
+		print((msg*)buf);
+		
 		return sendto(sock, buf, size, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
 	}
 };
@@ -199,12 +194,11 @@ public:
 		msg* response;
 		sockaddr_in addr;
 		clog << "started trying to send to player " << next_player.hostname << endl;
-		((msg*)Tegami)->print();
 		do {
-			next_player.send(&Tegami, size);
+			next_player.send(Tegami, size);
 			prev_player.rec(buf, BUFSIZ, &addr);
 			response = (msg*)buf;
-			response->print();
+			print(response);
 		} while(response->status != status_ok || response->origin != my_id);
 		clog << "player " << response->dest << "received msg" << endl;
 	}
@@ -216,8 +210,9 @@ public:
 			msg_size = prev_player.rec(Tegami, buf_size, &addr);
 			clog << "received tegami" << endl;
 			// TODO: only if my message
+			
 			((msg*)Tegami)->status = status_ok;
-			((msg*)Tegami)->print();
+			print((msg*)Tegami);
 			clog << "tegami confirmed will send" << endl;
 			next_player.send(Tegami, msg_size);
 		} while (msg_size == 0);
