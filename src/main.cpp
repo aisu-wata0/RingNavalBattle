@@ -33,10 +33,18 @@ void board_setup(Board& board, long numShips){
 			board.print();
 		}
 		
+		confirmed = "";
 		cout << "It's not like I like how you set up the board or anything, baka\n";
 		cout << "But do you confirm it? (y/n)" << endl;
 		cin >> confirmed;
 		confirmed.at(0) = tolower(confirmed.at(0));
+
+		while(confirmed != "y" && confirmed != "n"){	//wrong input handler
+			confirmed = "";
+			cout << "Answer correctly baka! Do you confirm it? (y/n)" << endl;
+			cin >> confirmed;
+			confirmed.at(0) = tolower(confirmed.at(0));
+		}
 	}
 }
 
@@ -74,8 +82,9 @@ int main(int argc, char **argv)
 	long board_max_x = 5;
 	int numShips = 2;
 	
-	int c, my_id;
-	string next_hostname;
+	int c;
+	int my_id = 0;
+	string next_hostname = "";
 	ifstream in_f;
 	ofstream o_f;
 	streambuf* coutbuf = cout.rdbuf(); //save old buf; 
@@ -96,7 +105,17 @@ int main(int argc, char **argv)
 				exit(EXIT_FAILURE);
 		}
 	}
-
+	
+	if(my_id == 0){
+		cout << "-p is mandatory\n";
+		exit(1);
+	}
+	
+	if(next_hostname == ""){
+		cout << "-h is mandatory\n";
+		exit(1);
+	}
+	
 	char buf[BUFSIZ];
 	
 	sockaddr_in p_addr;
@@ -152,7 +171,6 @@ int main(int argc, char **argv)
 				coord_msg* response_hit;
 				
 				net.rec_msg(buf, BUFSIZ);
-				
 				// process hit
 				if(((msg*)buf)->content == content_hit){
 					// msg containing hit data
@@ -166,6 +184,9 @@ int main(int argc, char **argv)
 				} else if (((msg*)buf)->content ==  content_ship_destroyed){
 					cout <<  "destroyed enemy ship" << endl;
 					enemies.at(0).set_destroyed_ship(response_ship->ship);
+					if(enemies.at(0).ship_n == 0){
+						cout << "Player at ID has been annihilated, who will be next?\n";
+					}
 				} else {
 					cout <<  "you missed!" << endl;
 				}
