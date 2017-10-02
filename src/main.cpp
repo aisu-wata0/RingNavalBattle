@@ -60,7 +60,7 @@ void print_game(Board my_board, vector<Board> enemies){
 }
 
 void read_attack(Coord& pos){
-	cout << "Were will you attack next taichou? (y x)" << endl;
+	cout << "Where will you attack next taichou? (y x)" << endl;
 	cin >> pos.y >> pos.x;
 }
 
@@ -78,10 +78,10 @@ int main(int argc, char **argv)
 	ofstream o_f;
 	streambuf* coutbuf = cout.rdbuf(); //save old buf; 
 	
-	while (( c = getopt(argc, argv, "p:n:")) != -1){
+	while (( c = getopt(argc, argv, "p:h:")) != -1){
 		switch (c){
 			case 'p':
-				my_id = optarg;
+				my_id = stoi(optarg);
 				break;
 			case 'h':
 				next_hostname = optarg;
