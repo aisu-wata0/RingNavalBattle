@@ -68,8 +68,10 @@ void print_game(Board my_board, vector<Board> enemies){
 }
 
 void read_attack(Coord& pos, int8_t& dest){
+	int d;
 	cout << "Which player will you attack?" << endl;
-	cin >> dest;
+	cin >> d;
+	dest = d;
 	cout << "Where will you attack next taichou? (y x)" << endl;
 	cin >> pos.y >> pos.x;
 }
@@ -159,8 +161,10 @@ int main(int argc, char **argv)
 				
 				attack_msg.info.baton = false;
 				attack_msg.info.status = 0;
-				attack_msg.info.origin = 1;
+				attack_msg.info.origin = net.my_id;
 				attack_msg.info.content = content_attack;
+				
+				cout << attack_msg.info.dest;
 				
 				//msg_queue.push_back(attack_msg);
 				net.send_msg(&attack_msg, sizeof(attack_msg));
@@ -215,9 +219,10 @@ int main(int argc, char **argv)
 			}else{
 				size_t msg_size = net.prev_player.rec(buf, BUFSIZ, &p_addr);
 				
-				((msg*)buf)->print();
+				print((msg*)buf);
 				
 				coord_msg* attack_msg;
+				attack_msg = (coord_msg*)buf;
 			
 				// Message for me
 				if( net.is_this_for_me((msg*)buf) ){
