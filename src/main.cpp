@@ -59,7 +59,9 @@ void print_game(Board my_board, vector<Board> enemies){
 	}
 }
 
-void read_attack(Coord& pos){
+void read_attack(Coord& pos, int8_t& dest){
+	cout << "Which player will you attack?" << endl;
+	cin >> dest;
 	cout << "Where will you attack next taichou? (y x)" << endl;
 	cin >> pos.y >> pos.x;
 }
@@ -106,7 +108,7 @@ int main(int argc, char **argv)
 	Ship ship_hit;
 	
 	vector<Board> enemies;
-	//map<int, Board> enemies; // TODO: necessary to manage ids?
+	
 	for (int i = 0; i < enemy_n; ++i){
 		enemies.push_back(Board(Coord{.y = board_max_y, .x = board_max_x}, numShips));
 	}
@@ -134,11 +136,10 @@ int main(int argc, char **argv)
 			if(my_board.ship_n > 0){
 				coord_msg attack_msg;
 				
-				read_attack(attack_msg.coord);
+				read_attack(attack_msg.coord, attack_msg.info.dest);
 				
 				attack_msg.info.baton = false;
 				attack_msg.info.status = 0;
-				attack_msg.info.dest = 1; // TODO: real ids
 				attack_msg.info.origin = 1;
 				attack_msg.info.content = content_attack;
 				
@@ -192,7 +193,9 @@ int main(int argc, char **argv)
 				net.pass_baton();
 			}else{
 				size_t msg_size = net.prev_player.rec(buf, BUFSIZ, &p_addr);
-
+				
+				((msg*)buf)->print();
+				
 				coord_msg* attack_msg;
 			
 				// Message for me

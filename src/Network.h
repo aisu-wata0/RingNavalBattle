@@ -36,11 +36,11 @@ enum msg_type {msg_baton, msg_turn};
 	
 class msg {
 public:
-	int baton:1;
-	int status:2;
-	int dest;
-	int origin;
-	int content;
+	int8_t baton:1;
+	int8_t status:2;
+	int8_t dest;
+	int8_t origin;
+	int8_t content;
 	
 	msg(){}
 	
@@ -56,11 +56,11 @@ public:
 	}
 	
 	void print(){
-		cout << "baton: " << baton << endl;
-		cout << "status: " << status << endl;
-		cout << "dest: " << dest << endl;
-		cout << "origin: " << origin << endl;
-		cout << "content: " << content << endl;
+		cout << "baton: " << (int)baton << endl;
+		cout << "status: " << (int)status << endl;
+		cout << "dest: " << (int)dest << endl;
+		cout << "origin: " << (int)origin << endl;
+		cout << "content: " << (int)content << endl;
 	}
 };
 
@@ -125,6 +125,13 @@ public:
 		socklen_t fromlen;
 		fromlen = sizeof(*p_addr);
 		int byte_count = recvfrom(sockfd, buf, size, 0, (sockaddr*)p_addr, &fromlen);
+		((msg*)buf)->print();
+		
+		cout << "baton: " << (int)((msg*)buf)->baton << endl;
+		cout << "status: " << (int)((msg*)buf)->status << endl;
+		cout << "dest: " << (int)((msg*)buf)->dest << endl;
+		cout << "origin: " << (int)((msg*)buf)->origin << endl;
+		cout << "content: " << (int)((msg*)buf)->content << endl;
 		
 		inet_ntop(AF_INET, &(p_addr->sin_addr), ipstr, INET6_ADDRSTRLEN);
 		clog <<"recvd "<< byte_count <<"bytes ";
@@ -167,7 +174,7 @@ public:
 	int send(void* buf, size_t size){
 		sockaddr_in addr = *((sockaddr_in*)&addr_dest);
 		inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
-		clog <<"sent "<< size <<"bytes of data ";
+		clog <<"sent "<< size <<" bytes of data ";
 		clog <<"to IP: "<< ipstr <<endl;
 		return sendto(sock, buf, size, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
 	}
@@ -191,7 +198,8 @@ public:
 		char buf[BUFSIZ];
 		msg* response;
 		sockaddr_in addr;
-		clog << "started trying to send to player " << response->dest << endl;
+		clog << "started trying to send to player " << next_player.hostname << endl;
+		((msg*)Tegami)->print();
 		do {
 			next_player.send(&Tegami, size);
 			prev_player.rec(buf, BUFSIZ, &addr);
