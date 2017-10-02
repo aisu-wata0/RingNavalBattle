@@ -23,7 +23,7 @@ void board_setup(Board& board, long numShips){
 			cout << "What will be the coord for the top left (y x) of the ship #" << i << " taichou?\n";
 			cin >> newShip.top_left.y >> newShip.top_left.x;
 		
-			cout << "And how about the height and width of the ship #" << i+1 << " taichou?\n";
+			cout << "And how about the height and width of the ship #" << i << " taichou?\n";
 			cin >> newShip.height >> newShip.width;
 			
 			if(board.set_ship(newShip) == FAIL){
@@ -187,6 +187,8 @@ int main(int argc, char **argv)
 					
 				} else if (((msg*)buf)->content ==  content_ship_destroyed){
 					cout <<  "destroyed enemy ship" << endl;
+					response_ship = (ship_msg*)buf;
+					
 					enemies.at(0).set_destroyed_ship(response_ship->ship);
 					if(enemies.at(0).ship_n == 0){
 						cout << "Player at ID has been annihilated, who will be next?\n";
