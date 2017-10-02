@@ -33,26 +33,33 @@
 
 namespace std{
 
-enum msg_type {msg_baton, msg_turn};
+enum msg_type {nil, msg_baton, msg_turn};
 	
 typedef struct {
 	int8_t baton;
 	int8_t status;
 	int8_t dest;
 	int8_t origin;
-	int8_t content;	
+	int8_t content;
 } msg;
 
 msg new_msg(msg_type type){
 	msg Tegami;
+	
+	Tegami.baton = 0;
+	Tegami.status = 0;
+	Tegami.dest = 0;
+	Tegami.origin = 0;
+	Tegami.content = 0;
+	
 	if(type == msg_baton){
 		Tegami.baton = true;
-		Tegami.content = 0;
 	}
 	if(type == msg_turn){
 		Tegami.baton = true;
 		Tegami.content = content_turn;
 	}
+	
 	return Tegami;
 }
 
@@ -78,6 +85,8 @@ typedef struct {
 msg turn_msg = new_msg(msg_turn);
 
 msg baton =  new_msg(msg_baton);
+
+msg nil_msg =  new_msg(nil);
 
 char ipstr[INET6_ADDRSTRLEN];
 
@@ -128,6 +137,7 @@ public:
 		inet_ntop(AF_INET, &(p_addr->sin_addr), ipstr, INET6_ADDRSTRLEN);
 		clog <<"recvd "<< byte_count <<" bytes ";
 		clog <<"from IP: "<< ipstr << endl;
+		print((msg*)buf);
 		
 		return byte_count;
 	}
@@ -200,7 +210,7 @@ public:
 			response = (msg*)buf;
 			print(response);
 		} while(response->status != status_ok || response->origin != my_id);
-		clog << "player " << response->dest << "received msg" << endl;
+		clog << "player " << (int)response->dest << "received msg" << endl;
 	}
 	
 	void rec_msg(void* Tegami, size_t buf_size){
@@ -212,8 +222,7 @@ public:
 			// TODO: only if my message
 			
 			((msg*)Tegami)->status = status_ok;
-			print((msg*)Tegami);
-			clog << "tegami confirmed will send" << endl;
+			clog << "confirmed it! sending back" << endl;
 			next_player.send(Tegami, msg_size);
 		} while (msg_size == 0);
 	}
@@ -221,6 +230,7 @@ public:
 	void pass_turn(bool& my_turn){
 		clog << "passing turn" << endl;
 		my_turn = false;
+		with_baton = false;
 		next_player.send(&turn_msg, sizeof(turn_msg));
 	}
 	

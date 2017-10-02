@@ -239,7 +239,7 @@ class Board {
 	void print(Spot spot){
 		switch(spot.idn){
 			case unk:
-				cout<<" ";
+				cout<<".";
 				break;
 			case water:
 				cout<<"~";
