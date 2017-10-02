@@ -78,7 +78,7 @@ void read_attack(Coord& pos, int8_t& dest){
 
 int main(int argc, char **argv)
 {
-	//print_ascii("../content/amatsukaze-pc160.txt");
+	print_ascii("content/amatsukaze.txt");
 	int enemy_n = 1;
 	long board_max_y = 5;
 	long board_max_x = 5;
