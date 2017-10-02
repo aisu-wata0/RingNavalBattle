@@ -175,7 +175,7 @@ class Board {
 		it.x = pos.x;
 		while(this->at(it).idn == this->at(pos).idn){
 			for(; it.x <= ship.bot_right().x; it.x++){
-				if(this->at(it).hit == false){--;
+				if(this->at(it).hit == false){;
 					ship_hp++;
 				}
 			}
