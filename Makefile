@@ -14,7 +14,7 @@ LIBS =
 
 # warnings and flags
 WARN = -Wall
-WNO = -Wno-comment  -Wno-sign-compare -Wno-strict-aliasing
+WNO = -Wno-comment  -Wno-sign-compare
 FLAGS = -O3 $(WARN) $(WNO)
 
 # Executable filename

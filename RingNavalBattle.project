@@ -103,4 +103,8 @@
       </Completion>
     </Configuration>
   </Settings>
+  <VirtualDirectory Name="root">
+    <File Name="Makefile"/>
+    <File Name=".gitignore"/>
+  </VirtualDirectory>
 </CodeLite_Project>
