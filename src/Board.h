@@ -82,13 +82,16 @@ class Board {
 	}
 
 	int set_destroyed_ship(Ship ship){
-		int ship_id = ship_n;
-		
-		ship_n--;
-		
+		if(this->at(ship.top_left.y,ship.top_left.x).idn != unk_ship){
+			return true;
+		}
 		if(ship.not_exist(sea_max)){
 			return FAIL;
 		}
+		
+		int ship_id = ship_n;
+		
+		ship_n--;
 		
 		for(long k = ship.top_left.y; k <= ship.bot_right().y; k++){
 			for(long l = ship.top_left.x; l <= ship.bot_right().x; l++){
