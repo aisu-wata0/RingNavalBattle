@@ -43,33 +43,13 @@ typedef struct {
 	int8_t content;
 } msg;
 
-msg new_msg(msg_type type){
-	msg Tegami;
-	
-	Tegami.baton = 0;
-	Tegami.status = 0;
-	Tegami.dest = 0;
-	Tegami.origin = 0;
-	Tegami.content = 0;
-	
-	if(type == msg_baton){
-		Tegami.baton = true;
-	}
-	if(type == msg_turn){
-		Tegami.baton = true;
-		Tegami.content = content_turn;
-	}
-	
-	return Tegami;
-}
-
-void print(msg* Tegami){
+void print(msg tegami){
 	clog
-	<< "baton: " << (int)Tegami->baton
-	<< ";\tstatus: " << (int)Tegami->status
-	<< ";\tdest: " << (int)Tegami->dest
-	<< ";\torigin: " << (int)Tegami->origin
-	<< ";\tcontent: " << (int)Tegami->content << endl;
+	<< "baton: " << (int)tegami.baton
+	<< ";\tstatus: " << (int)tegami.status
+	<< ";\tdest: " << (int)tegami.dest
+	<< ";\torigin: " << (int)tegami.origin
+	<< ";\tcontent: " << (int)tegami.content << endl;
 }
 
 typedef struct {
@@ -84,16 +64,36 @@ typedef struct {
 
 union msg_buffer {
 	msg info;
-	ship_msg ship_info;
 	coord_msg coord_info;
-	uint8_t buf[32*32];
+	ship_msg ship_info;
+	uint8_t buf[sizeof(ship_msg)]; // buffer size of biggest struct in union
 };
 
-msg turn_msg = new_msg(msg_turn);
+msg_buffer new_msg(msg_type type){
+	msg_buffer tegami;
+	
+	tegami.info.baton = 0;
+	tegami.info.status = 0;
+	tegami.info.dest = 0;
+	tegami.info.origin = 0;
+	tegami.info.content = 0;
+	
+	if(type == msg_baton){
+		tegami.info.baton = true;
+	}
+	if(type == msg_turn){
+		tegami.info.baton = true;
+		tegami.info.content = content_turn;
+	}
+	
+	return tegami;
+}
 
-msg baton =  new_msg(msg_baton);
+msg_buffer turn_msg = new_msg(msg_turn);
 
-msg nil_msg =  new_msg(nil);
+msg_buffer baton =  new_msg(msg_baton);
+
+msg_buffer nil_msg =  new_msg(nil);
 
 char ipstr[INET6_ADDRSTRLEN];
 
@@ -136,15 +136,15 @@ public:
 		}
 	}
 	
-	int rec(void* buf, size_t size, sockaddr_in* p_addr){
+	int rec(msg_buffer* buf_p, sockaddr_in* p_addr){
 		socklen_t fromlen;
 		fromlen = sizeof(*p_addr);
-		int byte_count = recvfrom(sockfd, buf, size, 0, (sockaddr*)p_addr, &fromlen);
+		int byte_count = recvfrom(sockfd, buf_p, sizeof(msg_buffer), 0, (sockaddr*)p_addr, &fromlen);
 		
 		inet_ntop(AF_INET, &(p_addr->sin_addr), ipstr, INET6_ADDRSTRLEN);
 		clog <<"recvd "<< byte_count <<" bytes ";
 		clog <<"from IP: "<< ipstr << endl;
-		print((msg*)buf);
+		print(buf_p->info);
 		
 		return byte_count;
 	}
@@ -180,21 +180,16 @@ public:
 		}
 	}
 	
-	int send(void* buf, size_t size){
+	int send(msg_buffer* buf_p, size_t size){
 		sockaddr_in addr = *((sockaddr_in*)&addr_dest);
 		inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
 		
 		clog <<"sent "<< size <<" bytes of data ";
 		clog <<"to IP: "<< ipstr <<endl;
-		msg_buffer msg_buf;
-		msg_buf.info = *((msg*)buf);
-		print((msg*)buf);
 		
-		print(&msg_buf.info);
-		
-		cout << &msg_buf.info << " : " << buf;
-		
-		return sendto(sock, buf, size, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
+		print(buf_p->info);
+
+		return sendto(sock, buf_p, size, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
 	}
 };
 
@@ -212,31 +207,30 @@ public:
 		with_baton = (my_id == 1);
 	}
 	
-	void send_msg(void* Tegami, size_t size){
-		char buf[BUFSIZ];
-		msg* response;
+	void send_msg(msg_buffer* tegami_p, size_t size){
+		msg_buffer buf;
 		sockaddr_in addr;
 		clog << "started trying to send to player " << next_player.hostname << endl;
 		do {
-			next_player.send(Tegami, size);
-			prev_player.rec(buf, BUFSIZ, &addr);
-			response = (msg*)buf;
-			print(response);
-		} while(response->status != status_ok || response->origin != my_id);
-		clog << "player " << (int)response->dest << " received msg" << endl;
+			next_player.send(tegami_p, size);
+			prev_player.rec(&buf, &addr);
+			print(buf.info);
+		} while(buf.info.status != status_ok || buf.info.origin != my_id);
+		clog << "player " << (int)buf.info.dest << " received msg" << endl;
 	}
 	
-	void rec_msg(void* Tegami, size_t buf_size){
+	void rec_msg(msg_buffer* tegami_p){
 		size_t msg_size = 0;
 		sockaddr_in addr;
 		do { 
-			msg_size = prev_player.rec(Tegami, buf_size, &addr);
-			clog << "received tegami" << endl;
+			msg_size = prev_player.rec(tegami_p, &addr);
+			clog << "received tegami_p" << endl;
 			// TODO: only if my message
 			
-			((msg*)Tegami)->status = status_ok;
+			tegami_p->info.status = status_ok;
 			clog << "confirmed it! sending back" << endl;
-			next_player.send(Tegami, msg_size);
+			
+			next_player.send(tegami_p, msg_size);
 		} while (msg_size == 0);
 	}
 	
@@ -244,17 +238,22 @@ public:
 		clog << "passing turn" << endl;
 		my_turn = false;
 		with_baton = false;
-		next_player.send(&turn_msg, sizeof(turn_msg));
+		next_player.send(&turn_msg, sizeof(msg));
 	}
 	
 	void pass_baton(){
 		clog << "passing baton" << endl;
 		with_baton = false;
-		next_player.send(&baton, sizeof(baton));
+		next_player.send(&baton, sizeof(msg));
 	}
 	
-	bool is_this_for_me(msg* tegami){
-		return (tegami->dest == my_id) || tegami->baton;
+	bool is_this_for_me(msg_buffer tegami){
+		with_baton = tegami.info.baton;
+		if(tegami.info.baton){
+			cout<< "Received baton\n";
+			return true;
+		}
+		return (tegami.info.dest == my_id) || tegami.info.baton;
 	}
 };
 
