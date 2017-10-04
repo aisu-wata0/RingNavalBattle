@@ -68,31 +68,31 @@ union msg_buffer {
 	ship_msg ship_info;
 };
 
-msg_buffer new_msg(msg_type type){
-	msg_buffer tegami;
+msg new_msg(msg_type type){
+	msg tegami;
 	
-	tegami.info.baton = 0;
-	tegami.info.status = 0;
-	tegami.info.dest = 0;
-	tegami.info.origin = 0;
-	tegami.info.content = 0;
+	tegami.baton = 0;
+	tegami.status = 0;
+	tegami.dest = 0;
+	tegami.origin = 0;
+	tegami.content = 0;
 	
 	if(type == msg_baton){
-		tegami.info.baton = true;
+		tegami.baton = true;
 	}
 	if(type == msg_turn){
-		tegami.info.baton = true;
-		tegami.info.content = content_turn;
+		tegami.baton = true;
+		tegami.content = content_turn;
 	}
 	
 	return tegami;
 }
 
-msg_buffer turn_msg = new_msg(msg_turn);
+msg turn_msg = new_msg(msg_turn);
 
-msg_buffer baton =  new_msg(msg_baton);
+msg baton =  new_msg(msg_baton);
 
-msg_buffer nil_msg =  new_msg(nil);
+msg nil_msg =  new_msg(nil);
 
 char ipstr[INET6_ADDRSTRLEN];
 
@@ -235,13 +235,13 @@ public:
 		clog << "passing turn" << endl;
 		my_turn = false;
 		with_baton = false;
-		next_player.send(&turn_msg, sizeof(msg));
+		next_player.send((msg_buffer*)&turn_msg, sizeof(msg));
 	}
 	
 	void pass_baton(){
 		clog << "passing baton" << endl;
 		with_baton = false;
-		next_player.send(&baton, sizeof(msg));
+		next_player.send((msg_buffer*)&baton, sizeof(msg));
 	}
 	
 	bool is_this_for_me(msg_buffer tegami){

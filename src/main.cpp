@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 		if(my_turn){
 			if(my_board.ship_n > 0){
 				msg_buffer attack_msg;
-				attack_msg = nil_msg;
+				attack_msg.info = nil_msg;
 				Coord pos;
 				
 				read_attack(pos, attack_msg.info.dest);
@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 						
 						has_response = true;
 						// set up response msg info
-						msg_to_send = nil_msg;
+						msg_to_send.info = nil_msg;
 						msg_to_send.info.dest = buf.info.origin;
 						msg_to_send.info.origin = net.my_id;
 						
