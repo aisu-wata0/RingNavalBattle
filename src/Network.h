@@ -82,6 +82,13 @@ typedef struct {
 	Ship ship;
 } ship_msg;
 
+union msg_buffer {
+	msg info;
+	ship_msg ship_info;
+	coord_msg coord_info;
+	uint8_t buf[32*32];
+};
+
 msg turn_msg = new_msg(msg_turn);
 
 msg baton =  new_msg(msg_baton);
@@ -178,8 +185,14 @@ public:
 		inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
 		
 		clog <<"sent "<< size <<" bytes of data ";
-		clog <<"to IP: "<< ipstr <<endl; 
+		clog <<"to IP: "<< ipstr <<endl;
+		msg_buffer msg_buf;
+		msg_buf.info = *((msg*)buf);
 		print((msg*)buf);
+		
+		print(&msg_buf.info);
+		
+		cout << &msg_buf.info << " : " << buf;
 		
 		return sendto(sock, buf, size, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
 	}
