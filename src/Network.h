@@ -66,7 +66,6 @@ union msg_buffer {
 	msg info;
 	coord_msg coord_info;
 	ship_msg ship_info;
-	uint8_t buf[sizeof(ship_msg)]; // buffer size of biggest struct in union
 };
 
 msg_buffer new_msg(msg_type type){
@@ -186,7 +185,6 @@ public:
 		
 		clog <<"sent "<< size <<" bytes of data ";
 		clog <<"to IP: "<< ipstr <<endl;
-		
 		print(buf_p->info);
 
 		return sendto(sock, buf_p, size, 0, (sockaddr*)&addr_dest, sizeof(addr_dest));
@@ -214,9 +212,8 @@ public:
 		do {
 			next_player.send(tegami_p, size);
 			prev_player.rec(&buf, &addr);
-			print(buf.info);
 		} while(buf.info.status != status_ok || buf.info.origin != my_id);
-		clog << "player " << (int)buf.info.dest << " received msg" << endl;
+		clog << "p" << (int)buf.info.dest << " confirmed msg" << endl;
 	}
 	
 	void rec_msg(msg_buffer* tegami_p){
