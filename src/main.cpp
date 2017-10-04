@@ -118,11 +118,11 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
-	char buf[BUFSIZ];
+	msg_buffer buf;
 	
 	sockaddr_in p_addr;
 	
-	char msg_to_send[BUFSIZ];
+	msg_buffer msg_to_send;
 	size_t msg_to_send_size;
 	
 	Board my_board(Coord{.y = board_max_y, .x = board_max_x});
@@ -155,41 +155,35 @@ int main(int argc, char **argv)
 	while(!game_ended){
 		if(my_turn){
 			if(my_board.ship_n > 0){
-				coord_msg attack_msg;
+				msg_buffer attack_msg;
+				attack_msg = nil_msg;
+				Coord pos;
 				
-				read_attack(attack_msg.coord, attack_msg.info.dest);
+				read_attack(pos, attack_msg.info.dest);
+				attack_msg.coord_info.coord = pos;
 				
+				// set up msg info
 				attack_msg.info.baton = false;
 				attack_msg.info.status = 0;
 				attack_msg.info.origin = net.my_id;
 				attack_msg.info.content = content_attack;
 				
-				cout << attack_msg.info.dest;
-				
-				//msg_queue.push_back(attack_msg);
-				net.send_msg(&attack_msg, sizeof(attack_msg));
+				net.send_msg(&attack_msg, sizeof(coord_msg));
 				
 				net.pass_baton();
 				
-				ship_msg* response_ship;
-				coord_msg* response_hit;
-				
-				net.rec_msg(buf, BUFSIZ);
+				net.rec_msg(&buf);
 				// process hit
-				if(((msg*)buf)->content == content_hit){
-					// msg containing hit data
-					response_hit = (coord_msg*)buf;
-					
-					enemies.at(0).at(attack_msg.coord).hit = true;	
-					if( available(enemies.at(0).at(attack_msg.coord)) ){
-						enemies.at(0).at(attack_msg.coord).idn = unk_ship;
+				if(buf.info.content == content_hit){
+					enemies.at(0).at(pos).hit = true;	
+					if( available(enemies.at(0).at(pos)) ){
+						enemies.at(0).at(pos).idn = unk_ship;
 					}
 					
-				} else if (((msg*)buf)->content ==  content_ship_destroyed){
+				} else if (buf.info.content ==  content_ship_destroyed){
 					cout <<  "destroyed enemy ship" << endl;
-					response_ship = (ship_msg*)buf;
 					
-					enemies.at(0).set_destroyed_ship(response_ship->ship);
+					enemies.at(0).set_destroyed_ship(buf.ship_info.ship);
 					if(enemies.at(0).ship_n == 0){
 						cout << "Player at ID has been annihilated, who will be next?\n";
 					}
@@ -201,10 +195,8 @@ int main(int argc, char **argv)
 
 				// wait baton
 				while(!net.with_baton){
-					size_t msg_size = net.prev_player.rec(buf, BUFSIZ, &p_addr);
-					if(net.is_this_for_me((msg*)buf)){
-						net.with_baton = ((msg*)buf)->baton;
-					}
+					size_t msg_size = net.prev_player.rec(&buf, &p_addr);
+					net.is_this_for_me(buf);
 				}
 			}
 			
@@ -214,35 +206,31 @@ int main(int argc, char **argv)
 				while(has_response){
 					//send_msg(msg_queue.front());
 					//msg_queue.pop_front();
-					net.send_msg(msg_to_send, msg_to_send_size);
+					net.send_msg(&msg_to_send, msg_to_send_size);
 					has_response = false;
 				}
 				net.pass_baton();
 			}else{
-				size_t msg_size = net.prev_player.rec(buf, BUFSIZ, &p_addr);
+				size_t msg_size = net.prev_player.rec(&buf, &p_addr);
 				
-				print((msg*)buf);
+				print(buf.info);
 				
-				coord_msg* attack_msg;
-				attack_msg = (coord_msg*)buf;
-			
 				// Message for me
-				if( net.is_this_for_me((msg*)buf) ){
+				if( net.is_this_for_me(buf) ){
 					cout << "We received a tegami taichou" << endl;
-					((msg*)buf)->status = status_ok;
-					net.with_baton = ((msg*)buf)->baton;
+					buf.info.status = status_ok;
 					
-					if( ((msg*)buf)->content == content_attack ){
+					if(buf.info.content == content_attack){
 						cout << "We got attacked" << endl;
-						attack_msg = (coord_msg*)buf;
 						
 						has_response = true;
-						*((coord_msg*)msg_to_send) = *(coord_msg*)&nil_msg;
-						((coord_msg*)msg_to_send)->info.dest = attack_msg->info.origin;
-						((coord_msg*)msg_to_send)->info.origin = net.my_id;
+						// set up response msg info
+						msg_to_send = nil_msg;
+						msg_to_send.info.dest = buf.info.origin;
+						msg_to_send.info.origin = net.my_id;
 						
 						// calculate hit
-						int ship_hp = my_board.attackField(attack_msg->coord, ship_hit);
+						int ship_hp = my_board.attackField(buf.coord_info.coord, ship_hit);
 						
 						if(ship_hp == 0){
 							cout << "They destroyed our ship!" << endl;
@@ -251,29 +239,29 @@ int main(int argc, char **argv)
 //								ship_destroyed_msg.info.dest = enemies.at(i).player;
 //								msg_queue.push_back(ship_destroyed_msg);
 //							}
-							((ship_msg*)msg_to_send)->info.content = content_ship_destroyed;
-							((ship_msg*)msg_to_send)->ship = ship_hit;
+							msg_to_send.info.content = content_ship_destroyed;
+							msg_to_send.ship_info.ship = ship_hit;
 						} else {
 							msg_to_send_size = sizeof(msg);
 							if(ship_hp != FAIL){
 								cout << "it hit!" << endl;
-								((msg*)msg_to_send)->content = content_hit;
+								msg_to_send.info.content = content_hit;
 							} else {
 								cout << "it missed. nyahahah" << endl;
-								((msg*)msg_to_send)->content = content_miss;
+								msg_to_send.info.content = content_miss;
 							}
-							//msg_queue.push_back(hit_msg);
 						}
 						cout << "our map:\n";
 						my_board.print();
-					} else if (((msg*)buf)->content == content_turn){	//turn
+					// if not an attack
+					} else if (buf.info.content == content_turn){	//turn
 						cout << "It's now our turn!" << endl;
 						my_turn = true;
 					}
 				}
 				// send forward non baton msgs
-				if( ! (((msg*)buf)->baton) ){
-					net.next_player.send(buf, msg_size);
+				if( ! buf.info.baton ){
+					net.next_player.send(&buf, msg_size);
 				}
 			}
 		}
