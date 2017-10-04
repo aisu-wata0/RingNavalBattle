@@ -106,5 +106,6 @@
   <VirtualDirectory Name="root">
     <File Name="Makefile"/>
     <File Name=".gitignore"/>
+    <File Name="todo.txt"/>
   </VirtualDirectory>
 </CodeLite_Project>
