@@ -26,11 +26,11 @@ void board_setup(Board& board, long numShips){
 			cout << "And how about the height and width of the ship #" << i << " taichou?\n";
 			cin >> newShip.height >> newShip.width;
 			
+			board.print();
 			if(board.set_ship(newShip) == FAIL){
 				i--;
 				cout << "You can't set up a ship like that! Try again but pay more attention this time taichou!\n";
 			}
-			board.print();
 		}
 		
 		confirmed = "";
@@ -87,9 +87,6 @@ int main(int argc, char **argv)
 	int c;
 	int my_id = 0;
 	string next_hostname = "";
-	ifstream in_f;
-	ofstream o_f;
-	streambuf* coutbuf = cout.rdbuf(); //save old buf; 
 	
 	while (( c = getopt(argc, argv, "p:h:")) != -1){
 		switch (c){
@@ -195,7 +192,7 @@ int main(int argc, char **argv)
 
 				// wait baton
 				while(!net.with_baton){
-					size_t msg_size = net.prev_player.rec(&buf, &p_addr);
+					net.prev_player.rec(&buf, &p_addr);
 					net.is_this_for_me(buf);
 				}
 			}
@@ -203,7 +200,7 @@ int main(int argc, char **argv)
 			net.pass_turn(my_turn);
 		} else {	//not my turn
 			if (net.with_baton){
-				while(has_response){
+				if(has_response){ // msg_queue.size() > 0
 					//send_msg(msg_queue.front());
 					//msg_queue.pop_front();
 					net.send_msg(&msg_to_send, msg_to_send_size);
@@ -250,6 +247,7 @@ int main(int argc, char **argv)
 								cout << "it missed. nyahahah" << endl;
 								msg_to_send.info.content = content_miss;
 							}
+							//msg_queue.push_back(hit_msg);
 						}
 						cout << "our map:\n";
 						my_board.print();
