@@ -159,11 +159,11 @@ int main(int argc, char **argv)
 				msg_buffer attack_msg;
 				//attack_msg.info = nil_msg;
 				Coord pos;
-				int dest;
+				int8_t dest;
 				read_attack(pos, dest);
 				
 				// set up msg info
-				att_msg(&attack_msg, pos, dest);
+				attack_msg = net.att_msg(pos, dest);
 				/*attack_msg.coord_info.coord = pos;
 				attack_msg.info.baton = false;
 				attack_msg.info.status = 0;
@@ -215,9 +215,7 @@ int main(int argc, char **argv)
 				net.pass_baton();
 			}else{
 				size_t msg_size = net.prev_player.rec(&buf, &p_addr);
-				
-				print(buf.info);
-				
+								
 				// Message for me
 				if( net.is_this_for_me(buf) ){
 					cout << "We received a tegami taichou" << endl;

@@ -216,14 +216,16 @@ public:
 		clog << "p" << (int)buf.info.dest << " confirmed msg" << endl;
 	}
 	
-	void att_msg(msg_buffer* tegami_p, Coord pos, int targetID){
-		attack_msg.info = nil_msg;
-		attack_msg.coord_info.coord = pos;
-		attack_msg.info.baton = false;
-		attack_msg.info.status = 0;
-		attack_msg.info.origin = my_id;
-		attack_msg.info.dest = targetID;
-		attack_msg.info.content = content_attack;
+	msg_buffer att_msg(Coord pos, int8_t targetID){
+		msg_buffer tegami;
+		tegami.info = nil_msg;
+		tegami.coord_info.coord = pos;
+		tegami.info.baton = false;
+		tegami.info.status = 0;
+		tegami.info.origin = my_id;
+		tegami.info.dest = targetID;
+		tegami.info.content = content_attack;
+		return tegami;
 	}
 	
 	void rec_msg(msg_buffer* tegami_p){
