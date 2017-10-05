@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 	long board_max_x = 5;
 	int numShips = 2;
 	
-	int c;
+	int c , wID;
 	int my_id = 0;
 	string next_hostname = "";
 	
@@ -150,20 +150,25 @@ int main(int argc, char **argv)
 	}
 	
 	while(!game_ended){
+		if(enemy_n == 0){
+			game_ended = true;
+			wID = net.my_id;
+		}
 		if(my_turn){
 			if(my_board.ship_n > 0){
 				msg_buffer attack_msg;
-				attack_msg.info = nil_msg;
+				//attack_msg.info = nil_msg;
 				Coord pos;
-				
-				read_attack(pos, attack_msg.info.dest);
-				attack_msg.coord_info.coord = pos;
+				int dest;
+				read_attack(pos, dest);
 				
 				// set up msg info
+				att_msg(&attack_msg, pos, dest);
+				/*attack_msg.coord_info.coord = pos;
 				attack_msg.info.baton = false;
 				attack_msg.info.status = 0;
 				attack_msg.info.origin = net.my_id;
-				attack_msg.info.content = content_attack;
+				attack_msg.info.content = content_attack;*/
 				
 				net.send_msg(&attack_msg, sizeof(coord_msg));
 				
@@ -182,6 +187,7 @@ int main(int argc, char **argv)
 					
 					enemies.at(0).set_destroyed_ship(buf.ship_info.ship);
 					if(enemies.at(0).ship_n == 0){
+						enemy_n--;
 						cout << "Player at ID has been annihilated, who will be next?\n";
 					}
 				} else {
@@ -264,6 +270,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	
+	cout << "And the winner is Player " << wID <<", GRATULEIXONS!!" << endl;
 	return 0;
 }
