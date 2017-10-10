@@ -159,6 +159,12 @@ int main(int argc, char **argv)
 	print_game(my_board, enemies);
 	
 	Connection net(my_id, next_hostname); // TODO: real ids
+	//msg setup_msg
+	while(!ready){
+		net.sendmsg(setup_msg, sizeof(setup_msg)); //my_id + 1, if player sees he increments id
+		net.pass_baton();
+		net.rec_msg(&buf);	//wait for msg to return
+	}
 	
 	bool has_response = false;
 	bool game_ended = false;
@@ -182,26 +188,27 @@ int main(int argc, char **argv)
 				msg_buffer attack_msg;
 				Coord pos;
 				int8_t dest;
+				
 				read_attack(pos, dest);
 				
 				// set up msg info
 				attack_msg = net.att_msg(pos, dest);
 				
-				net.send_msg(&attack_msg, sizeof(coord_msg));
+				net.send_msg(&attack_msg, sizeof(coord_msg));	//send msg forward
 				
 				net.pass_baton();
-				
-				net.rec_msg(&buf);
+								
+				net.rec_msg(&buf);	//wait for msg to return
 				
 				// process hit
 				if(buf.info.content == content_hit){
-					enemies.at(0).at(pos).hit = true;	
+					enemies.at(0).at(pos).hit = true;
 					if( available(enemies.at(0).at(pos)) ){
 						enemies.at(0).at(pos).idn = unk_ship;
 					}
 					
 				} else if (buf.info.content ==  content_ship_destroyed){
-					cout <<  "destroyed enemy ship" << endl;
+					cout <<  "Destroyed enemy ship!" << endl;
 					
 					enemies.at(0).set_destroyed_ship(buf.ship_info.ship);
 					if(enemies.at(0).ship_n == 0){
@@ -209,12 +216,13 @@ int main(int argc, char **argv)
 						cout << "Player at ID has been annihilated, who will be next?\n";
 					}
 				} else {
-					cout << "you missed!" << endl;
+					cout << "You missed!" << endl;
 				}
-				cout << "enemy map\n";
+				
+				cout << "Enemy map:\n";
 				enemies.at(0).print();
 
-				// wait baton
+				// wait baton for passing turn
 				while(!net.with_baton){
 					net.prev_player.rec(&buf, &p_addr);
 					net.is_this_for_me(buf);
@@ -243,7 +251,7 @@ int main(int argc, char **argv)
 						cout << "We got attacked" << endl;
 						
 						has_response = true;
-						// set up response msg info
+						// set up response msg info 
 						msg_to_send.info = nil_msg;
 						msg_to_send.info.dest = buf.info.origin;
 						msg_to_send.info.origin = net.my_id;
