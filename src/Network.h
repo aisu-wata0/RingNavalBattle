@@ -34,7 +34,7 @@
 
 namespace std{
 
-enum msg_type {nil, msg_baton, msg_turn};
+enum msg_type {nil, msg_baton, msg_turn, msg_id};
 	
 typedef struct {
 	int8_t baton;
@@ -55,6 +55,11 @@ void print(msg tegami){
 
 typedef struct {
 	msg info;
+	int my_id;
+} my_msg;
+
+typedef struct {
+	msg info;
 	Coord coord;
 } coord_msg;
 
@@ -65,6 +70,7 @@ typedef struct {
 
 union msg_buffer {
 	msg info;
+	my_msg my_msg_info;
 	coord_msg coord_info;
 	ship_msg ship_info;
 };

@@ -79,7 +79,7 @@ void read_attack(Coord& pos, int8_t& dest){
 int main(int argc, char **argv)
 {
 	print_ascii("content/amatsukaze.txt");
-	int enemy_n = 1;
+	int enemy_n = 3;
 	long board_max_y = 5;
 	long board_max_x = 5;
 	int numShips = 2;
@@ -115,32 +115,40 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
-	/*
+	msg_buffer buf;
+	
+	sockaddr_in p_addr;
+
+	bool set = false;
 	//Setup ids
+	//new constructor for connection without id
+	Connection net(next_hostname);
 	if(my_id == 1){
-		Connection net(my_id, next_hostname);
-		while(!notSet){
-			msg_buffer set_ID;
-			set_ID.info = new_msg(id_msg);
-			
-			net.send_msg(set_ID, sizeof(msg));
+		net.my_id = 1;
+		while(set){
+			msg set_ID;  //send msg need msg_buffer*
+			msg_type id;
+			set_ID = new_msg(id);
+			size_t msgSize = sizeof(msg);
+			net.send_msg(set_ID, msgSize);
 			net.pass_baton();
 			net.rec_msg(&buf);
 			
 			//process to see if evertyhing ok then resend or end
-			if(buf)
+			if(buf.info.content == 4) set = true;
+			else set = false;
 		}
 	}
-	else(){
-		size_t msg_size = net.prev_player.rec(&buf, &p_addr);
-		//need to make the connection on "slaves"
-		//proccess msg to atrib id
+	else{
+		//pass msg with id = 1 but not set ids, if it returns with 3 increments ok to set and start
+		size_t msg_size = net.prev_player.rec(&buf, &p_addr); //how to receive without net
+		my_id = buf.info.content + 1;
+		buf.info.content++;
+		Connection net(my_id, next_hostname);
 		net.next_player.send(&buf, msg_size);
 	}
-	*/
-	msg_buffer buf;
 	
-	sockaddr_in p_addr;
+	
 	
 	msg_buffer msg_to_send;
 	size_t msg_to_send_size;
@@ -160,11 +168,11 @@ int main(int argc, char **argv)
 	
 	Connection net(my_id, next_hostname); // TODO: real ids
 	//msg setup_msg
-	while(!ready){
+	/*while(!ready){
 		net.sendmsg(setup_msg, sizeof(setup_msg)); //my_id + 1, if player sees he increments id
 		net.pass_baton();
 		net.rec_msg(&buf);	//wait for msg to return
-	}
+	}*/
 	
 	bool has_response = false;
 	bool game_ended = false;
