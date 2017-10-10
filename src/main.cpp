@@ -88,10 +88,10 @@ int main(int argc, char **argv)
 	int my_id = 0;
 	string next_hostname = "";
 	
-	while (( c = getopt(argc, argv, "p:h:")) != -1){
+	while (( c = getopt(argc, argv, "fh:")) != -1){
 		switch (c){
 			case 'p':
-				my_id = stoi(optarg);
+				my_id = 1;
 				break;
 			case 'h':
 				next_hostname = optarg;
@@ -100,21 +100,44 @@ int main(int argc, char **argv)
 			// missing option argument
 				fprintf(stderr, "%s: option '-%c' requires an argument\n", argv[0], optopt);
 			default:
-				fprintf(stderr, "Usage: %s -p player_order -n next_hostname\n", argv[0]);
+				fprintf(stderr, "Usage: %s [-f first_player] -h next_hostname\n", argv[0]);
 				exit(EXIT_FAILURE);
 		}
 	}
 	
-	if(my_id == 0){
+	/*if(my_id == 0){
 		cout << "-p is mandatory\n";
 		exit(1);
-	}
+	}*/
 	
 	if(next_hostname == ""){
 		cout << "-h is mandatory\n";
 		exit(1);
 	}
 	
+	/*
+	//Setup ids
+	if(my_id == 1){
+		Connection net(my_id, next_hostname);
+		while(!notSet){
+			msg_buffer set_ID;
+			set_ID.info = new_msg(id_msg);
+			
+			net.send_msg(set_ID, sizeof(msg));
+			net.pass_baton();
+			net.rec_msg(&buf);
+			
+			//process to see if evertyhing ok then resend or end
+			if(buf)
+		}
+	}
+	else(){
+		size_t msg_size = net.prev_player.rec(&buf, &p_addr);
+		//need to make the connection on "slaves"
+		//proccess msg to atrib id
+		net.next_player.send(&buf, msg_size);
+	}
+	*/
 	msg_buffer buf;
 	
 	sockaddr_in p_addr;
@@ -157,24 +180,19 @@ int main(int argc, char **argv)
 		if(my_turn){
 			if(my_board.ship_n > 0){
 				msg_buffer attack_msg;
-				//attack_msg.info = nil_msg;
 				Coord pos;
 				int8_t dest;
 				read_attack(pos, dest);
 				
 				// set up msg info
 				attack_msg = net.att_msg(pos, dest);
-				/*attack_msg.coord_info.coord = pos;
-				attack_msg.info.baton = false;
-				attack_msg.info.status = 0;
-				attack_msg.info.origin = net.my_id;
-				attack_msg.info.content = content_attack;*/
 				
 				net.send_msg(&attack_msg, sizeof(coord_msg));
 				
 				net.pass_baton();
 				
 				net.rec_msg(&buf);
+				
 				// process hit
 				if(buf.info.content == content_hit){
 					enemies.at(0).at(pos).hit = true;	

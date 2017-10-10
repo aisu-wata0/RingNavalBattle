@@ -22,6 +22,7 @@
 #define PORT 9635
 #define PORT_S "9635"
 
+#define content_id 1
 #define content_miss 3
 #define content_attack 4
 #define content_ship_destroyed 5
@@ -84,15 +85,19 @@ msg new_msg(msg_type type){
 		tegami.baton = true;
 		tegami.content = content_turn;
 	}
-	
+	if(type == msg_id){
+		tegami.content = content_id;
+	}
 	return tegami;
 }
 
 msg turn_msg = new_msg(msg_turn);
 
-msg baton =  new_msg(msg_baton);
+msg baton = new_msg(msg_baton);
 
-msg nil_msg =  new_msg(nil);
+msg nil_msg = new_msg(nil);
+
+msg id_msg = new_msg(msg_id);
 
 char ipstr[INET6_ADDRSTRLEN];
 
