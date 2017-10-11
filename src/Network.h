@@ -34,7 +34,7 @@
 
 namespace std{
 
-enum msg_type {nil, msg_baton, msg_turn, msg_id};
+enum msg_type {nil, msg_baton, msg_turn};
 	
 typedef struct {
 	int8_t baton;
@@ -56,7 +56,7 @@ void print(msg tegami){
 typedef struct {
 	msg info;
 	int my_id;
-} my_msg;
+} id_msg;
 
 typedef struct {
 	msg info;
@@ -70,7 +70,7 @@ typedef struct {
 
 union msg_buffer {
 	msg info;
-	my_msg my_msg_info;
+	id_msg id_info;
 	coord_msg coord_info;
 	ship_msg ship_info;
 };
@@ -91,9 +91,6 @@ msg new_msg(msg_type type){
 		tegami.baton = true;
 		tegami.content = content_turn;
 	}
-	if(type == msg_id){
-		tegami.content = content_id;
-	}
 	return tegami;
 }
 
@@ -102,8 +99,6 @@ msg turn_msg = new_msg(msg_turn);
 msg baton = new_msg(msg_baton);
 
 msg nil_msg = new_msg(nil);
-
-msg id_msg = new_msg(msg_id);
 
 char ipstr[INET6_ADDRSTRLEN];
 
@@ -214,6 +209,11 @@ public:
 		prev_player() {
 		my_id = id;
 		with_baton = (my_id == 1);
+	}
+	
+	Connection(string next_hostname): 
+		next_player(next_hostname),
+		prev_player() {
 	}
 	
 	void send_msg(msg_buffer* tegami_p, size_t size){
