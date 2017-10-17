@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <stdio.h>
+#include <errno.h>
 
 #include "Ship.h"
 
@@ -142,8 +143,8 @@ public:
 	}
 	
 	int rec(msg_buffer* buf_p, sockaddr_in* p_addr){
-		socklen_t fromlen;
-		fromlen = sizeof(*p_addr);
+		socklen_t fromlen = sizeof(*p_addr);
+		
 		int byte_count = recvfrom(sockfd, buf_p, sizeof(msg_buffer), 0, (sockaddr*)p_addr, &fromlen);
 		
 		inet_ntop(AF_INET, &(p_addr->sin_addr), ipstr, INET6_ADDRSTRLEN);
@@ -151,6 +152,37 @@ public:
 		clog <<"from IP: "<< ipstr << endl;
 		print(buf_p->info);
 		
+		return byte_count;
+	}
+	
+	int rec_packet(msg_buffer* buf_p, int timeout_sec){
+		sockaddr_in addr;
+		int addr_len = sizeof(sockaddr_in);
+		
+		struct timeval tv;
+		if(timeout_sec > 0){
+			tv.tv_sec =	timeout_sec;
+			tv.tv_usec = 0;
+			if(setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv,sizeof(struct timeval)) < 0)
+				fprintf(stderr, "setsockopt to set timeout failed, errno: %d\n", errno);
+		}
+		
+		int byte_count = recvfrom(sockfd, buf_p, sizeof(msg_buffer), 0, (sockaddr*)&addr, (socklen_t *)&addr_len);
+		// receive a network packet and copy in to buffer
+		
+		if(timeout_sec > 0){
+			tv.tv_sec = 0; tv.tv_usec = 0;
+			if(setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(struct timeval)) < 0)
+				fprintf(stderr, "setsockopt to unset timeout failed, errno: %d\n", errno);
+		}
+		
+		if(byte_count > 0){
+			inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
+			clog <<"recvd "<< byte_count <<" bytes ";
+			clog <<"from IP: "<< ipstr << endl;
+			print(buf_p->info);			
+		}
+
 		return byte_count;
 	}
 };

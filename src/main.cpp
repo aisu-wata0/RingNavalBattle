@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 	long board_max_x = 5;
 	int numShips = 2;
 	
-	int c , wID, inc;
+	int c , wID;
 	int my_id = 0;
 	string next_hostname = "";
 	
@@ -117,7 +117,6 @@ int main(int argc, char **argv)
 	
 	msg_buffer buf;
 	msg_buffer setID; 
-	size_t msgSize = sizeof(msg);
 	
 	sockaddr_in p_addr;
 
@@ -132,37 +131,27 @@ int main(int argc, char **argv)
 	}
 	
 	while(notSet){
-		if(my_id == 1){
-			net.send_msg(&setID, msgSize);
-			sleep(15);
-			net.pass_baton();
-			net.rec_msg(&buf);
+		if(net.my_id == 1){
+			net.next_player.send(&setID, sizeof(setID));
+			// with timeout
+			size_t msg_size = net.prev_player.rec_packet(&buf, 2);
+			//timed out
 			
-			
-			//process to see if evertyhing ok then resend or end
-			cout << "\n zzzzzzzzzzzzz " << buf.id_info.my_id << "\n\n" << endl;
-			if(buf.id_info.my_id == enemy_n + 1){
-				notSet = false;
-			}
-			else{
+			cout << msg_size << endl;
+			if(msg_size < 1){
 				notSet = true;
 				setID.id_info.my_id = 1;
+			} else {
+				notSet = false;
 			}
-		}
-		else{
-			inc = 0;
+			//process to see if evertyhing ok then resend or end
+		} else {
 			size_t msg_size = net.prev_player.rec(&buf, &p_addr);
-			inc = buf.id_info.my_id + 1;
+			// if(buf.content == )
 			buf.id_info.my_id++;
+			my_id = buf.id_info.my_id;
 			net.next_player.send(&buf, msg_size);
-			sleep(15);
-			net.pass_baton();
 		}
-	}
-	
-	if(my_id == 0){
-		my_id = inc;
-		net.my_id = my_id;
 	}
 	
 	
@@ -179,7 +168,7 @@ int main(int argc, char **argv)
 	}
 
 	board_setup(my_board, numShips);
-	
+	cout << my_id << endl;
 	print_game(my_board, enemies);
 	
 	//Connection net(my_id, next_hostname); // TODO: real ids
