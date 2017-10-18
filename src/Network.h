@@ -24,6 +24,7 @@
 #define PORT_S "9635"
 
 #define content_id 1
+#define content_start 2
 #define content_miss 3
 #define content_attack 4
 #define content_ship_destroyed 5
@@ -155,10 +156,9 @@ public:
 		return byte_count;
 	}
 	
-	int rec_packet(msg_buffer* buf_p, int timeout_sec){
-		sockaddr_in addr;
-		int addr_len = sizeof(sockaddr_in);
-		
+	int rec_packet(msg_buffer* buf_p, sockaddr_in* p_addr, int timeout_sec){
+		socklen_t fromlen = sizeof(*p_addr);
+		int byte_count = 0;
 		struct timeval tv;
 		if(timeout_sec > 0){
 			tv.tv_sec =	timeout_sec;
@@ -167,7 +167,7 @@ public:
 				fprintf(stderr, "setsockopt to set timeout failed, errno: %d\n", errno);
 		}
 		
-		int byte_count = recvfrom(sockfd, buf_p, sizeof(msg_buffer), 0, (sockaddr*)&addr, (socklen_t *)&addr_len);
+		byte_count = recvfrom(sockfd, buf_p, sizeof(msg_buffer), 0, (sockaddr*)p_addr, &fromlen);
 		// receive a network packet and copy in to buffer
 		
 		if(timeout_sec > 0){
@@ -177,7 +177,7 @@ public:
 		}
 		
 		if(byte_count > 0){
-			inet_ntop(AF_INET, &(addr.sin_addr), ipstr, INET6_ADDRSTRLEN);
+			inet_ntop(AF_INET, &(p_addr->sin_addr), ipstr, INET6_ADDRSTRLEN);
 			clog <<"recvd "<< byte_count <<" bytes ";
 			clog <<"from IP: "<< ipstr << endl;
 			print(buf_p->info);			

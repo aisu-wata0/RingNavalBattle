@@ -79,7 +79,7 @@ void read_attack(Coord& pos, int8_t& dest){
 int main(int argc, char **argv)
 {
 	//print_ascii("content/amatsukaze.txt");
-	int enemy_n = 1;
+	int enemy_n = 2;
 	long board_max_y = 5;
 	long board_max_x = 5;
 	int numShips = 2;
@@ -116,40 +116,65 @@ int main(int argc, char **argv)
 	}
 	
 	msg_buffer buf;
-	msg_buffer setID; 
+	msg_buffer start_msg; 
 	
 	sockaddr_in p_addr;
 
-	bool notSet = true;
+	bool ready = false;
+	bool set = false;
 	//Setup ids
 	//new constructor for connection without id
 	Connection net(next_hostname);
 	
 	if(my_id == 1){
 		net.my_id = 1;
-		setID.id_info.my_id = 1;
+		start_msg.id_info.my_id = 1;
 	}
 	
-	while(notSet){
+	while(!ready){
 		if(net.my_id == 1){
-			net.next_player.send(&setID, sizeof(setID));
-			// with timeout
-			size_t msg_size = net.prev_player.rec_packet(&buf, 2);
-			//timed out
-			
-			cout << msg_size << endl;
-			if(msg_size < 1){
-				notSet = true;
-				setID.id_info.my_id = 1;
-			} else {
-				notSet = false;
+			//SETTING IDS
+			if(!set){
+				start_msg.info.content = content_id;
+				net.next_player.send(&start_msg, sizeof(start_msg));
+				// with timeout
+				int msg_size = net.prev_player.rec_packet(&buf, &p_addr, 2);
+				
+				cout << msg_size << endl;
+				//timed out
+				if(msg_size < 1){
+					set = false;
+					start_msg.id_info.my_id = 1;
+					
+				//ids set need to start game
+				} else {
+					set = true;
+				}
 			}
-			//process to see if evertyhing ok then resend or end
+			
+			//PASSING OK TO START
+			else{
+				start_msg.info.content = content_start;
+				net.next_player.send(&start_msg, sizeof(start_msg));
+				// with timeout
+				size_t msg_size = net.prev_player.rec_packet(&buf, &p_addr, 2);
+				
+				if(msg_size < 1){
+					ready = false;					
+				} else {
+					ready = true;
+				}
+			}
 		} else {
 			size_t msg_size = net.prev_player.rec(&buf, &p_addr);
-			// if(buf.content == )
-			buf.id_info.my_id++;
-			my_id = buf.id_info.my_id;
+			
+			if(buf.info.content == content_id){
+				buf.id_info.my_id++;
+				my_id = buf.id_info.my_id;
+			}
+			else{
+				ready = true;
+			}
 			net.next_player.send(&buf, msg_size);
 		}
 	}
@@ -163,12 +188,13 @@ int main(int argc, char **argv)
 	
 	vector<Board> enemies;
 	
+	//treat ids for multiplayer, player2[0] == player1 player2[1] == player[3]
 	for (int i = 0; i < enemy_n; ++i){
 		enemies.push_back(Board(Coord{.y = board_max_y, .x = board_max_x}, numShips));
 	}
-
+	
 	board_setup(my_board, numShips);
-	cout << my_id << endl;
+	
 	print_game(my_board, enemies);
 	
 	//Connection net(my_id, next_hostname); // TODO: real ids
