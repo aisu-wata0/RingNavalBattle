@@ -10,8 +10,9 @@
 
 using namespace std;
 
-void board_setup(Board& board, long numShips){
+void board_setup(Board& board, long numShips, int ID){
 	Ship newShip;
+	board.player = ID;
 	
 	cout << "Taichou, This is our advanced technology map of the highest precision, the top left coordinate is (0,0) (y,x)\n";
 	board.print();
@@ -61,10 +62,12 @@ void print_ascii(string filename){
 void print_game(Board my_board, vector<Board> enemies){
 	my_board.print();
 	
+	cout << endl;
 	for(int i = 0; i < enemies.size(); ++i){
-		cout << "Player " << i << endl;
+		cout << "Player " << i + 1 << endl;
 		enemies.at(i).print();
 	}
+	cout << endl;
 }
 
 void read_attack(Coord& pos, int8_t& dest){
@@ -79,10 +82,10 @@ void read_attack(Coord& pos, int8_t& dest){
 int main(int argc, char **argv)
 {
 	//print_ascii("content/amatsukaze.txt");
-	int enemy_n = 2;
+	int enemy_n;
 	long board_max_y = 5;
 	long board_max_x = 5;
-	int numShips = 2;
+	int numShips = 1;
 	
 	int c , wID;
 	int my_id = 0;
@@ -130,7 +133,7 @@ int main(int argc, char **argv)
 		net.my_id = 1;
 		start_msg.id_info.my_id = 1;
 	}
-	
+	//!! what to do if a player joins then disconects, ids get messed up
 	while(!ready){
 		if(net.my_id == 1){
 			//SETTING IDS
@@ -140,7 +143,6 @@ int main(int argc, char **argv)
 				// with timeout
 				int msg_size = net.prev_player.rec_packet(&buf, &p_addr, 2);
 				
-				cout << msg_size << endl;
 				//timed out
 				if(msg_size < 1){
 					set = false;
@@ -149,6 +151,7 @@ int main(int argc, char **argv)
 				//ids set need to start game
 				} else {
 					set = true;
+					enemy_n = buf.id_info.my_id - 1;
 				}
 			}
 			
@@ -174,6 +177,7 @@ int main(int argc, char **argv)
 			}
 			else{
 				ready = true;
+				net.my_id = my_id;
 			}
 			net.next_player.send(&buf, msg_size);
 		}
@@ -182,6 +186,8 @@ int main(int argc, char **argv)
 	
 	msg_buffer msg_to_send;
 	size_t msg_to_send_size;
+
+	msg_to_send_size = sizeof(msg_buffer);
 	
 	Board my_board(Coord{.y = board_max_y, .x = board_max_x});
 	Ship ship_hit;
@@ -189,11 +195,13 @@ int main(int argc, char **argv)
 	vector<Board> enemies;
 	
 	//treat ids for multiplayer, player2[0] == player1 player2[1] == player[3]
-	for (int i = 0; i < enemy_n; ++i){
+	for (int i = 0; i < enemy_n + 1; ++i){
 		enemies.push_back(Board(Coord{.y = board_max_y, .x = board_max_x}, numShips));
 	}
+		
+	board_setup(my_board, numShips, net.my_id);
 	
-	board_setup(my_board, numShips);
+	enemies[net.my_id - 1] = my_board;
 	
 	print_game(my_board, enemies);
 	
@@ -226,12 +234,12 @@ int main(int argc, char **argv)
 			if(my_board.ship_n > 0){
 				msg_buffer attack_msg;
 				Coord pos;
-				int8_t dest;
+				int8_t target;
 				
-				read_attack(pos, dest);
+				read_attack(pos, target);
 				
 				// set up msg info
-				attack_msg = net.att_msg(pos, dest);
+				attack_msg = net.att_msg(pos, target);
 				
 				net.send_msg(&attack_msg, sizeof(coord_msg));	//send msg forward
 				
@@ -241,16 +249,16 @@ int main(int argc, char **argv)
 				
 				// process hit
 				if(buf.info.content == content_hit){
-					enemies.at(0).at(pos).hit = true;
-					if( available(enemies.at(0).at(pos)) ){
-						enemies.at(0).at(pos).idn = unk_ship;
+					enemies.at(target).at(pos).hit = true;
+					if( available(enemies.at(target).at(pos)) ){
+						enemies.at(target).at(pos).idn = unk_ship;
 					}
 					
 				} else if (buf.info.content ==  content_ship_destroyed){
 					cout <<  "Destroyed enemy ship!" << endl;
 					
-					enemies.at(0).set_destroyed_ship(buf.ship_info.ship);
-					if(enemies.at(0).ship_n == 0){
+					enemies.at(target).set_destroyed_ship(buf.ship_info.ship);
+					if(enemies.at(target).ship_n == 0){
 						enemy_n--;
 						cout << "Player at ID has been annihilated, who will be next?\n";
 					}
@@ -259,7 +267,7 @@ int main(int argc, char **argv)
 				}
 				
 				cout << "Enemy map:\n";
-				enemies.at(0).print();
+				enemies.at(target).print();
 
 				// wait baton for passing turn
 				while(!net.with_baton){

@@ -231,11 +231,12 @@ class Board {
 	
 	void print(){
 		Coord it;
+		cout << endl;
 		for(it.y = 0; it.y < sea_max.y; it.y++){
 			for(it.x = 0; it.x < sea_max.x; it.x++){
 				this->print(this->at(it));
 			}
-			cout<< endl;
+			cout << endl;
 		}
 	}
 	
