@@ -27,11 +27,13 @@ void board_setup(Board& board, long numShips, int ID){
 			cout << "And how about the height and width of the ship #" << i << " taichou?\n";
 			cin >> newShip.height >> newShip.width;
 			
-			board.print();
 			if(board.set_ship(newShip) == FAIL){
 				i--;
 				cout << "You can't set up a ship like that! Try again but pay more attention this time taichou!\n";
 			}
+			
+			board.print();
+			
 		}
 		
 		confirmed = "";
@@ -158,6 +160,8 @@ int main(int argc, char **argv)
 			//PASSING OK TO START
 			else{
 				start_msg.info.content = content_start;
+				start_msg.info.status = enemy_n;
+				
 				net.next_player.send(&start_msg, sizeof(start_msg));
 				// with timeout
 				size_t msg_size = net.prev_player.rec_packet(&buf, &p_addr, 2);
@@ -178,6 +182,7 @@ int main(int argc, char **argv)
 			else{
 				ready = true;
 				net.my_id = my_id;
+				enemy_n = buf.info.status;
 			}
 			net.next_player.send(&buf, msg_size);
 		}
@@ -200,9 +205,10 @@ int main(int argc, char **argv)
 	}
 		
 	board_setup(my_board, numShips, net.my_id);
-	
+
+	cout << enemy_n << endl;
 	enemies[net.my_id - 1] = my_board;
-	
+
 	print_game(my_board, enemies);
 	
 	//Connection net(my_id, next_hostname); // TODO: real ids
@@ -249,16 +255,16 @@ int main(int argc, char **argv)
 				
 				// process hit
 				if(buf.info.content == content_hit){
-					enemies.at(target).at(pos).hit = true;
-					if( available(enemies.at(target).at(pos)) ){
-						enemies.at(target).at(pos).idn = unk_ship;
+					enemies.at(target-1).at(pos).hit = true;
+					if( available(enemies.at(target-1).at(pos)) ){
+						enemies.at(target-1).at(pos).idn = unk_ship;
 					}
 					
 				} else if (buf.info.content ==  content_ship_destroyed){
 					cout <<  "Destroyed enemy ship!" << endl;
 					
-					enemies.at(target).set_destroyed_ship(buf.ship_info.ship);
-					if(enemies.at(target).ship_n == 0){
+					enemies.at(target-1).set_destroyed_ship(buf.ship_info.ship);
+					if(enemies.at(target-1).ship_n == 0){
 						enemy_n--;
 						cout << "Player at ID has been annihilated, who will be next?\n";
 					}
@@ -267,7 +273,7 @@ int main(int argc, char **argv)
 				}
 				
 				cout << "Enemy map:\n";
-				enemies.at(target).print();
+				enemies.at(target-1).print();
 
 				// wait baton for passing turn
 				while(!net.with_baton){

@@ -131,6 +131,18 @@ class Board {
 		return true;
 	}
 	
+	/*int remove_ship(Ship ship){
+		
+		ship_max--;
+		ship_n--;
+		
+		for(long k = ship.top_left.y; k <= ship.bot_right().y; k++){
+			for(long l = ship.top_left.x; l <= ship.bot_right().x; l++){
+				this->at(k, l).idn = water;
+			}
+		}
+	}*/
+	
 	int get_ship(Coord pos, Ship& ship){
 		int ship_hp = 0;
 		Coord it;
@@ -231,7 +243,6 @@ class Board {
 	
 	void print(){
 		Coord it;
-		cout << endl;
 		for(it.y = 0; it.y < sea_max.y; it.y++){
 			for(it.x = 0; it.x < sea_max.x; it.x++){
 				this->print(this->at(it));
