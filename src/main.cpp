@@ -110,11 +110,6 @@ int main(int argc, char **argv)
 		}
 	}
 	
-	/*if(my_id == 0){
-		cout << "-p is mandatory\n";
-		exit(1);
-	}*/
-	
 	if(next_hostname == ""){
 		cout << "-h is mandatory\n";
 		exit(1);
@@ -127,6 +122,7 @@ int main(int argc, char **argv)
 
 	bool ready = false;
 	bool set = false;
+	
 	//Setup ids
 	//new constructor for connection without id
 	Connection net(next_hostname);
@@ -138,10 +134,12 @@ int main(int argc, char **argv)
 	//!! what to do if a player joins then disconects, ids get messed up
 	while(!ready){
 		if(net.my_id == 1){
+			
 			//SETTING IDS
 			if(!set){
 				start_msg.info.content = content_id;
 				net.next_player.send(&start_msg, sizeof(start_msg));
+				
 				// with timeout
 				int msg_size = net.prev_player.rec_packet(&buf, &p_addr, 2);
 				
@@ -150,7 +148,7 @@ int main(int argc, char **argv)
 					set = false;
 					start_msg.id_info.my_id = 1;
 					
-				//ids set need to start game
+				//ids set, need to start game
 				} else {
 					set = true;
 					enemy_n = buf.id_info.my_id - 1;
@@ -206,18 +204,9 @@ int main(int argc, char **argv)
 		
 	board_setup(my_board, numShips, net.my_id);
 
-	cout << enemy_n << endl;
 	enemies[net.my_id - 1] = my_board;
 
 	print_game(my_board, enemies);
-	
-	//Connection net(my_id, next_hostname); // TODO: real ids
-	//msg setup_msg
-	/*while(!ready){
-		net.sendmsg(setup_msg, sizeof(setup_msg)); //my_id + 1, if player sees he increments id
-		net.pass_baton();
-		net.rec_msg(&buf);	//wait for msg to return
-	}*/
 	
 	bool has_response = false;
 	bool game_ended = false;
@@ -232,10 +221,6 @@ int main(int argc, char **argv)
 	}
 	
 	while(!game_ended){
-		if(enemy_n == 0){
-			game_ended = true;
-			wID = net.my_id;
-		}
 		if(my_turn){
 			if(my_board.ship_n > 0){
 				msg_buffer attack_msg;
@@ -283,7 +268,8 @@ int main(int argc, char **argv)
 			}
 			
 			net.pass_turn(my_turn);
-		} else {	//not my turn
+		//not my turn
+		} else {
 			if (net.with_baton){
 				if(has_response){ // msg_queue.size() > 0
 					//send_msg(msg_queue.front());
@@ -305,9 +291,7 @@ int main(int argc, char **argv)
 						
 						has_response = true;
 						// set up response msg info 
-						msg_to_send.info = nil_msg;
-						msg_to_send.info.dest = buf.info.origin;
-						msg_to_send.info.origin = net.my_id;
+						net.response_msg(&msg_to_send, buf.info.origin);
 						
 						// calculate hit
 						int ship_hp = my_board.attackField(buf.coord_info.coord, ship_hit);
@@ -318,6 +302,7 @@ int main(int argc, char **argv)
 //							for(int i=0; i < enemies.size(); i++){
 //								ship_destroyed_msg.info.dest = enemies.at(i).player;
 //								msg_queue.push_back(ship_destroyed_msg);
+//								wtf is this shit bruuuh
 //							}
 							msg_to_send.info.content = content_ship_destroyed;
 							msg_to_send.ship_info.ship = ship_hit;
@@ -346,6 +331,10 @@ int main(int argc, char **argv)
 				}
 			}
 		}
+	}
+	if(enemy_n == 0){
+		game_ended = true;
+		wID = net.my_id;
 	}
 	cout << "And the winner is Player " << wID <<", GRATULEIXONS!!" << endl;
 	return 0;

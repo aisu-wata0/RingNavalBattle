@@ -271,6 +271,12 @@ public:
 		return tegami;
 	}
 	
+	void response_msg(msg_buffer* tegami, int dest){
+		tegami->info = nil_msg;
+		tegami->info.dest = dest;
+		tegami->info.origin = my_id;
+	}
+	
 	void rec_msg(msg_buffer* tegami_p){
 		size_t msg_size = 0;
 		sockaddr_in addr;
