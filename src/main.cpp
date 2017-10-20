@@ -123,49 +123,40 @@ int main(int argc, char **argv)
 	bool ready = false;
 	bool set = false;
 	
-	//Setup ids
-	//new constructor for connection without id
+	// Setup ids
 	Connection net(next_hostname);
 	
 	if(my_id == 1){
 		net.my_id = 1;
 		start_msg.id_info.my_id = 1;
 	}
-	//!! what to do if a player joins then disconects, ids get messed up
+	// TODO: what to do if a player joins then disconects, ids get messed up
 	while(!ready){
 		if(net.my_id == 1){
-			
-			//SETTING IDS
-			if(!set){
-				start_msg.info.content = content_id;
+			if(!set){ // Ring not complete, still sending id setup msg
+				start_msg.info.content = content_id_setup;
 				net.next_player.send(&start_msg, sizeof(start_msg));
 				
-				// with timeout
-				int msg_size = net.prev_player.rec_packet(&buf, &p_addr, 2);
-				
-				//timed out
-				if(msg_size < 1){
+				// wait for message to come back, with timeout
+				int msg_size = net.prev_player.rec_packet(&buf, &p_addr, TIMEOUT);
+				if(msg_size < 1){ // timed out
 					set = false;
 					start_msg.id_info.my_id = 1;
-					
-				//ids set, need to start game
-				} else {
+				} else { // received message back, ring is complete.
+					// ids set, need to start game
 					set = true;
 					enemy_n = buf.id_info.my_id - 1;
 				}
-			}
-			
-			//PASSING OK TO START
-			else{
+			} else { // Ring complete, every player has their id
+				// send the number of players in the network in the start msg
 				start_msg.info.content = content_start;
 				start_msg.info.status = enemy_n;
 				
 				net.next_player.send(&start_msg, sizeof(start_msg));
 				// with timeout
-				size_t msg_size = net.prev_player.rec_packet(&buf, &p_addr, 2);
-				
-				if(msg_size < 1){
-					ready = false;					
+				size_t msg_size = net.prev_player.rec_packet(&buf, &p_addr, TIMEOUT);
+				if(msg_size < 1){ // timed out
+					ready = false;
 				} else {
 					ready = true;
 				}
@@ -173,13 +164,11 @@ int main(int argc, char **argv)
 		} else {
 			size_t msg_size = net.prev_player.rec(&buf, &p_addr);
 			
-			if(buf.info.content == content_id){
+			if(buf.info.content == content_id_setup){
 				buf.id_info.my_id++;
-				my_id = buf.id_info.my_id;
-			}
-			else{
+				net.my_id = buf.id_info.my_id;
+			} else { // if(buf.info.content == content_start)
 				ready = true;
-				net.my_id = my_id;
 				enemy_n = buf.info.status;
 			}
 			net.next_player.send(&buf, msg_size);

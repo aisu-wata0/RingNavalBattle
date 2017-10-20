@@ -22,8 +22,9 @@
 
 #define PORT 9635
 #define PORT_S "9635"
+#define TIMEOUT 2
 
-#define content_id 1
+#define content_id_setup 1
 #define content_start 2
 #define content_miss 3
 #define content_attack 4

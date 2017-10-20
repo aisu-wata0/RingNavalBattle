@@ -103,7 +103,7 @@ class Board {
 	}
 	
 	int set_ship(Ship ship){
-		if(ship_max >= max_ships){
+		if(ship_max >= (int)max_ships){
 			return FAIL;
 		}
 		int ship_id = ship_max;
