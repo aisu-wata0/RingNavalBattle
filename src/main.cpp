@@ -65,7 +65,7 @@ void print_game(Board my_board, vector<Board> enemies){
 	my_board.print();
 	
 	cout << endl;
-	for(int i = 0; i < enemies.size(); ++i){
+	for(size_t i = 0; i < enemies.size(); ++i){
 		cout << "Player " << i + 1 << endl;
 		enemies.at(i).print();
 	}
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 
 	msg_to_send_size = sizeof(msg_buffer);
 	
-	Board my_board(Coord{.y = board_max_y, .x = board_max_x});
+	Board my_board({board_max_y, board_max_x});
 	Ship ship_hit;
 	
 	vector<Board> enemies;
@@ -237,7 +237,7 @@ int main(int argc, char **argv)
 				net.pass_baton();
 								
 				net.rec_msg(&buf);	//wait for msg to return
-				
+
 				// process hit
 				if(buf.info.content == content_hit){
 					enemies.at(target-1).at(pos).hit = true;
@@ -247,10 +247,7 @@ int main(int argc, char **argv)
 					
 				} else if (buf.info.content ==  content_ship_destroyed){
 					cout <<  "Destroyed enemy ship!" << endl;
-					
 					enemies.at(target-1).set_destroyed_ship(buf.ship_info.ship);
-					//!!Send msg to everyone for ship destroyed
-		
 					if(enemies.at(target-1).ship_n == 0){
 						enemy_n--;
 						cout << "Player at ID has been annihilated, who will be next?\n";
@@ -301,6 +298,7 @@ int main(int argc, char **argv)
 						if(ship_hp == 0){
 							cout << "They destroyed our ship!" << endl;
 							msg_to_send_size = sizeof(ship_msg);
+							// TODO: Send msg to everyone for ship destroyed
 //							for(int i=0; i < enemies.size(); i++){
 //								ship_destroyed_msg.info.dest = enemies.at(i).player;
 //								msg_queue.push_back(ship_destroyed_msg);
@@ -332,10 +330,14 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-	}
-	if(enemy_n == 0){
-		game_ended = true;
-		wID = net.my_id;
+		if(enemy_n == 0){
+			game_ended = true;
+			wID = net.my_id;
+		} else if(enemy_n == 1 && not my_board.alive()) {
+			game_ended = true;
+			// TODO: search the id of the single alive enemy
+			// wID = ;
+		}
 	}
 	cout << "And the winner is Player " << wID <<", GRATULEIXONS!!" << endl;
 	return 0;

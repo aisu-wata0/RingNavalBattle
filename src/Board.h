@@ -80,9 +80,14 @@ class Board {
 			}
 		}
 	}
+	
+	bool alive(){
+		return (ship_n > 0);
+	}
 
 	int set_destroyed_ship(Ship ship){
-		if(this->at(ship.top_left.y,ship.top_left.x).idn != unk_ship){
+		if(is_ship(this->at(ship.top_left.y,ship.top_left.x))){
+			// if you already identified this ship
 			return true;
 		}
 		if(ship.not_exist(sea_max)){
