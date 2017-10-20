@@ -131,7 +131,7 @@ class Board {
 		return true;
 	}
 	
-	/*int remove_ship(Ship ship){
+	/*void remove_ship(Ship ship){
 		
 		ship_max--;
 		ship_n--;

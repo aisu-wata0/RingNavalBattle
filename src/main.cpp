@@ -249,6 +249,8 @@ int main(int argc, char **argv)
 					cout <<  "Destroyed enemy ship!" << endl;
 					
 					enemies.at(target-1).set_destroyed_ship(buf.ship_info.ship);
+					//!!Send msg to everyone for ship destroyed
+		
 					if(enemies.at(target-1).ship_n == 0){
 						enemy_n--;
 						cout << "Player at ID has been annihilated, who will be next?\n";
@@ -302,7 +304,6 @@ int main(int argc, char **argv)
 //							for(int i=0; i < enemies.size(); i++){
 //								ship_destroyed_msg.info.dest = enemies.at(i).player;
 //								msg_queue.push_back(ship_destroyed_msg);
-//								wtf is this shit bruuuh
 //							}
 							msg_to_send.info.content = content_ship_destroyed;
 							msg_to_send.ship_info.ship = ship_hit;
