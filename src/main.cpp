@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
-	msg_buffer buf;
+	msg_buffer buf, buf2;
 	msg_buffer start_msg; 
 	
 	sockaddr_in p_addr;
@@ -176,7 +176,7 @@ int main(int argc, char **argv)
 	}
 	
 	
-	msg_buffer msg_to_send;
+	msg_buffer msg_to_send, ship_destroyed_msg;
 	size_t msg_to_send_size;
 
 	msg_to_send_size = sizeof(msg_buffer);
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
 	
 	bool has_response = false;
 	bool game_ended = false;
-	bool my_turn;
+	bool my_turn, received = false;
 
 	if(net.my_id == 1){
 		my_turn = true;
@@ -286,14 +286,22 @@ int main(int argc, char **argv)
 						
 						if(ship_hp == 0){
 							cout << "They destroyed our ship!" << endl;
-							msg_to_send_size = sizeof(ship_msg);
 							// TODO: Send msg to everyone for ship destroyed
-//							for(int i=0; i < enemies.size(); i++){
-//								ship_destroyed_msg.info.dest = enemies.at(i).player;
-//								msg_queue.push_back(ship_destroyed_msg);
-//							}
-							msg_to_send.info.content = content_ship_destroyed;
-							msg_to_send.ship_info.ship = ship_hit;
+							while(!received){
+								ship_destroyed_msg.info.content = content_ship_destroyed;
+								ship_destroyed_msg.ship_info.ship = ship_hit;
+								ship_destroyed_msg.id_info.my_id = net.my_id;
+
+								net.next_player.send(&ship_destroyed_msg, sizeof(ship_destroyed_msg));
+								
+								// wait for message to come back, with timeout
+								int ship_destroyed_size = net.prev_player.rec_packet(&buf2, &p_addr, TIMEOUT);
+								if(msg_size < 1){ // timed out
+									received = false;
+								} else { // received message back, ring is complete.
+									received = true;
+								}
+							}
 						} else {
 							msg_to_send_size = sizeof(msg);
 							if(ship_hp != FAIL){
@@ -311,6 +319,12 @@ int main(int argc, char **argv)
 					} else if (buf.info.content == content_turn){	//turn
 						cout << "It's now our turn!" << endl;
 						my_turn = true;
+					} else if (buf.info.content == content_ship_destroyed){
+						enemies.at(buf.id_info.my_id-1).set_destroyed_ship(buf.ship_info.ship);
+						if(enemies.at(buf.id_info.my_id-1).ship_n == 0){
+							enemy_n--;
+							cout << "Player at ID has been annihilated, who will be next?\n";
+						}
 					}
 				}
 				// send forward non baton msgs
