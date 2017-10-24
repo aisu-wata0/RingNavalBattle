@@ -86,6 +86,10 @@ class Board {
 	}
 
 	int set_destroyed_ship(Ship ship){
+		
+		//!!
+		cout << "Setting shippo destroyed topY, topX" << ship.top_left.x << ship.top_left.y << endl;
+		cout << "Width, Height" << ship.width << ship.height << endl;
 		if(is_ship(this->at(ship.top_left.y,ship.top_left.x))){
 			// if you already identified this ship
 			return true;
@@ -108,7 +112,7 @@ class Board {
 	}
 	
 	int set_ship(Ship ship){
-		if(ship_max >= (int)max_ships){
+		if(ship_max >= max_ships){
 			return FAIL;
 		}
 		int ship_id = ship_max;

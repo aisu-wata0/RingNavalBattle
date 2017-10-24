@@ -29,7 +29,7 @@
 #define content_miss 3
 #define content_attack 4
 #define content_ship_destroyed 5
-
+#define content_end 6
 #define content_turn 7
 #define content_hit 8
 
