@@ -88,8 +88,8 @@ class Board {
 	int set_destroyed_ship(Ship ship){
 		
 		//!!
-		cout << "Setting shippo destroyed topY, topX" << ship.top_left.x << ship.top_left.y << endl;
-		cout << "Width, Height" << ship.width << ship.height << endl;
+		cout << "Setting ship destroyed topX, topY" << ship.top_left.x << ship.top_left.y << endl;
+		cout << "Width, Height" << ship.width << "   " << ship.height << endl;
 		if(is_ship(this->at(ship.top_left.y,ship.top_left.x))){
 			// if you already identified this ship
 			return true;

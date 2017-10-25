@@ -225,7 +225,6 @@ int main(int argc, char **argv)
 				net.pass_baton();
 								
 				net.rec_msg(&buf);	//wait for msg to return
-
 				// process hit
 				if(buf.info.content == content_hit){
 					enemies.at(target-1).at(pos).hit = true;
@@ -239,19 +238,23 @@ int main(int argc, char **argv)
 					if(enemies.at(target-1).ship_n == 0){
 						enemy_n--;
 						cout << "Player " << (int) buf.info.origin << " has been annihilated, who will be next?\n";
-						if(enemy_n == 0){
-							game_ended = true;
-							wID = net.my_id;
-						}
 					}
 				} else {
 					cout << "You missed!" << endl;
 				}
-				
+				if(enemy_n == 0){
+					game_ended = true;
+					wID = net.my_id;
+				}
 				cout << "Enemy map:\n";
 				enemies.at(target-1).print();
 				print_game(enemies);
 				
+				if(enemy_n == 0){
+					game_ended = true;
+					wID = net.my_id;
+					break;
+				}
 				// wait baton for passing turn
 				while(!net.with_baton){
 					net.prev_player.rec(&buf, &p_addr);
@@ -279,7 +282,7 @@ int main(int argc, char **argv)
 				if(has_response){ // msg_queue.size() > 0
 					//send_msg(msg_queue.front());
 					//msg_queue.pop_front();
-					net.send_msg(&msg_to_send, msg_to_send_size);
+					net.send_msg(&msg_to_send, sizeof(msg_to_send));
 					has_response = false;
 				}
 				net.pass_baton();
@@ -340,7 +343,15 @@ int main(int argc, char **argv)
 					enemies.at(buf.info.origin-1).set_destroyed_ship(buf.ship_info.ship);
 					if(enemies.at(buf.info.origin-1).ship_n == 0){
 						enemy_n--;
-						cout << "Player " <<  (int) buf.info.origin << " has been annihilated by Player" << buf.info.dest << ", who will be next? Nyaahahaha\n";
+						cout << "Player " <<  (int) buf.info.origin << " has been annihilated by Player" << (int) buf.info.dest << ", who will be next? Nyaahahaha\n";
+					}
+					if(enemy_n == 1 && enemies.at(net.my_id-1).ship_n == 0){
+						game_ended = true;
+						for(int k = 0; k < enemies.size(); k++){
+							if(enemies.at(k).alive()){
+								wID = k+1;
+							}
+						}
 					}
 				}
 				if( ! buf.info.baton ){
