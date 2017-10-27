@@ -69,15 +69,36 @@ void print_game(vector<Board> enemies){
 	cout << endl;
 }
 
-void read_attack(Coord& pos, int8_t& dest){
+bool id_in_range(int target, int enemy_n, int my_id){
+	if(target == my_id || target > enemy_n + 1 || target < 1) return false;
+	return true;
+}
+
+bool pos_in_range(Coord pos, long max_y, long max_x){
+	if(pos.x < 0 || pos.x > max_x) return false;
+	if(pos.y < 0 || pos.y > max_y) return false;
+	return true;
+}
+
+void read_attack(Coord& pos, int8_t& dest, int enemy_n, int my_id, long max_y, long max_x){
 	int d = 0;
 	pos.y = 0;
 	pos.x = 0;
+	
 	cout << "Which player will you attack?" << endl;
 	cin >> d;
+	while(!id_in_range(d, enemy_n, my_id)){
+		cout << "Baka! Please enter a valid player which you will attack." << endl;
+		cin >> d;
+	}
 	dest = d;
+	
 	cout << "Where will you attack next taichou? (y x)" << endl;
 	cin >> pos.y >> pos.x;
+	while(!pos_in_range(Coord pos, max_y, max_x)){
+		cout << "Baka! Please enter a valid position to attack." << endl;
+		cin >> pos.y >> pos.x;
+	}
 }
 
 int main(int argc, char **argv)
@@ -215,7 +236,7 @@ int main(int argc, char **argv)
 				Coord pos;
 				int8_t target;
 				
-				read_attack(pos, target);
+				read_attack(pos, target, enemy_n, net.my_id, board_max_y, board_max_x);
 				
 				// set up msg info
 				attack_msg = net.att_msg(pos, target);
