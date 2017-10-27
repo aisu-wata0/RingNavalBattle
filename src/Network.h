@@ -29,10 +29,9 @@
 #define content_miss 3
 #define content_attack 4
 #define content_ship_destroyed 5
-#define content_end 6
+
 #define content_turn 7
 #define content_hit 8
-
 
 #define status_ok 3
 
@@ -310,7 +309,7 @@ public:
 	bool is_this_for_me(msg_buffer tegami){
 		with_baton = tegami.info.baton;
 		if(tegami.info.baton){
-			cout<< "Received baton\n";
+			clog << "received baton" << endl;
 			return true;
 		}
 		return (tegami.info.dest == my_id) || tegami.info.baton;

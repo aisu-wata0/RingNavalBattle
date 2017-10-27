@@ -3,16 +3,19 @@
 #include <fstream>
 #include <string>
 #include <queue>
+#include <cstdint>
+#include <ios>
+#include <algorithm>
 
 #include "Ship.h"
 #include "Board.h"
 #include "Network.h"
 
+#define DEBUG false
 using namespace std;
 
 void board_setup(Board& board, long numShips, int ID){
 	Ship newShip;
-	board.player = ID;
 	
 	cout << "Taichou, you are player " << ID << " and this is our advanced technology map of the highest precision, the top left coordinate is (0,0) (y,x)\n";
 	board.print();
@@ -80,36 +83,63 @@ bool pos_in_range(Coord pos, long max_y, long max_x){
 	return true;
 }
 
+int readInteger(){
+	int int_num;
+	
+	while(not(cin >> int_num)){
+		cout << "Not a valid number" << endl;
+		cin.clear();
+		cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+	}
+	return int_num;
+}
+
 void read_attack(Coord& pos, int8_t& dest, int enemy_n, int my_id, long max_y, long max_x){
 	int d = 0;
 	pos.y = 0;
 	pos.x = 0;
+	bool valid = false;
 	
 	cout << "Which player will you attack?" << endl;
-	cin >> d;
-	while(!id_in_range(d, enemy_n, my_id)){
-		cout << "Baka! Please enter a valid player which you will attack." << endl;
-		cin >> d;
+	
+	while(!valid){
+		d = readInteger();
+		if(id_in_range(d, enemy_n, my_id)) valid = true;
+		else cout << "Baka, enter a valid player." << endl;
 	}
+	
 	dest = d;
+	valid = false;
 	
 	cout << "Where will you attack next taichou? (y x)" << endl;
-	cin >> pos.y >> pos.x;
-	while(!pos_in_range(Coord pos, max_y, max_x)){
-		cout << "Baka! Please enter a valid position to attack." << endl;
+	
+	while(!valid){
 		cin >> pos.y >> pos.x;
+		if (cin && pos_in_range(pos, max_y, max_x)){
+			valid = true;
+		}
+		if(!valid){
+			cout << "Baka! Please enter a valid position to attack." << endl;
+			cin.clear();
+			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		}
 	}
 }
 
 int main(int argc, char **argv)
 {
 	//print_ascii("content/amatsukaze.txt");
+	
+	if(!DEBUG){
+		clog.rdbuf(NULL);
+	}
+	
 	int enemy_n = 0;
 	long board_max_y = 5;
 	long board_max_x = 5;
 	int numShips = 1;
 	
-	int c , wID;
+	int c , wID = 0;
 	int my_id = 0;
 	string next_hostname = "";
 	
@@ -135,8 +165,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	
-	msg_buffer buf, buf2;
-	msg_buffer start_msg; 
+	msg_buffer buf, start_msg;
 	
 	sockaddr_in p_addr;
 
@@ -150,7 +179,7 @@ int main(int argc, char **argv)
 		net.my_id = 1;
 		start_msg.id_info.my_id = 1;
 	}
-	// TODO: what to do if a player joins then disconects, ids get messed up
+	
 	while(!ready){
 		if(net.my_id == 1){
 			if(!set){ // Ring not complete, still sending id setup msg
@@ -219,14 +248,14 @@ int main(int argc, char **argv)
 	
 	bool has_response = false;
 	bool game_ended = false;
-	bool my_turn, received = false;
+	bool my_turn;
 
 	if(net.my_id == 1){
 		my_turn = true;
 		cout<< "it's your turn" << endl;
 	}else{
 		my_turn = false;
-		cout<< "standby" << endl;
+		//cout << "standby" << endl;
 	}
 	
 	while(!game_ended || has_response){
@@ -244,7 +273,8 @@ int main(int argc, char **argv)
 				net.send_msg(&attack_msg, sizeof(coord_msg));	//send msg forward
 				
 				net.pass_baton();
-								
+				
+				
 				net.rec_msg(&buf);	//wait for msg to return
 				// process hit
 				if(buf.info.content == content_hit){
@@ -286,24 +316,9 @@ int main(int argc, char **argv)
 			net.pass_turn(my_turn);
 		//not my turn
 		} else {
-			/*
-			if(enemy_n == 0){
-				game_ended = true;
-				wID = net.my_id;
-			} else if(enemy_n == 1 && not my_board.alive()) {
-				game_ended = true;
-				
-				for(int p = 0; p < enemies.size(); p++){
-					if(enemies.at(p).alive()){
-						wID = p+1;
-					}
-				}
-			}*/
 			if (net.with_baton){
-				if(has_response){ // msg_queue.size() > 0
-					//send_msg(msg_queue.front());
-					//msg_queue.pop_front();
-					net.send_msg(&msg_to_send, sizeof(msg_to_send));
+				if(has_response){ 
+					net.send_msg(&msg_to_send, msg_to_send_size);
 					has_response = false;
 				}
 				net.pass_baton();
@@ -312,7 +327,7 @@ int main(int argc, char **argv)
 								
 				// Message for me
 				if( net.is_this_for_me(buf) ){
-					cout << "We received a tegami taichou" << endl;
+					//cout << "We received a tegami taichou" << endl;
 					buf.info.status = status_ok;
 					
 					if(buf.info.content == content_attack){
@@ -327,7 +342,6 @@ int main(int argc, char **argv)
 						
 						if(ship_hp == 0){
 							cout << "They destroyed our ship!" << endl;
-							// TODO: Send msg to everyone for ship destroyed
 							if(enemy_n == 1 && enemies.at(net.my_id-1).ship_n == 0){
 								game_ended = true;
 								for(int k = 0; k < enemies.size(); k++){
@@ -340,6 +354,7 @@ int main(int argc, char **argv)
 							msg_to_send.ship_info.ship = ship_hit;
 							msg_to_send.info.dest = buf.info.origin;
 							msg_to_send.info.origin = net.my_id;
+							msg_to_send_size = sizeof(ship_msg);
 						} else {
 							msg_to_send_size = sizeof(msg);
 							if(ship_hp != FAIL){
@@ -349,7 +364,6 @@ int main(int argc, char **argv)
 								cout << "it missed. nyahahah" << endl;
 								msg_to_send.info.content = content_miss;
 							}
-							//msg_queue.push_back(hit_msg);
 						}
 						cout << "our map:\n";
 						enemies.at(net.my_id-1).print();
@@ -381,6 +395,11 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	cout << "And the winner is Player " << wID <<", GRATULEIXONS!!" << endl;
+	if(wID == net.my_id){
+		cout << "You are the winner! Congratulations!!" << endl;
+	}
+	else{
+		cout << "You LOST! Player " << wID << " destroyed everyone! Try harder next time!!" << endl;
+	}
 	return 0;
 }

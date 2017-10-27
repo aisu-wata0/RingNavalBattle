@@ -40,7 +40,6 @@ class Board {
 	Coord sea_max;
 	board_type posession;
 	int ship_n, ship_max;
-	int player;
 	vector<Spot> sea;
 	
 	Board(Coord sea_max): sea(sea_max.y*sea_max.x){
@@ -86,10 +85,7 @@ class Board {
 	}
 
 	int set_destroyed_ship(Ship ship){
-		
-		//!!
-		cout << "Setting ship destroyed topX, topY" << ship.top_left.x << ship.top_left.y << endl;
-		cout << "Width, Height" << ship.width << "   " << ship.height << endl;
+
 		if(is_ship(this->at(ship.top_left.y,ship.top_left.x))){
 			// if you already identified this ship
 			return true;
@@ -139,18 +135,6 @@ class Board {
 		}
 		return true;
 	}
-	
-	/*void remove_ship(Ship ship){
-		
-		ship_max--;
-		ship_n--;
-		
-		for(long k = ship.top_left.y; k <= ship.bot_right().y; k++){
-			for(long l = ship.top_left.x; l <= ship.bot_right().x; l++){
-				this->at(k, l).idn = water;
-			}
-		}
-	}*/
 	
 	int get_ship(Coord pos, Ship& ship){
 		int ship_hp = 0;
@@ -258,6 +242,7 @@ class Board {
 			}
 			cout << endl;
 		}
+		cout << endl;
 	}
 	
 	void print(Spot spot){
