@@ -135,9 +135,10 @@ int main(int argc, char **argv)
 	}
 	
 	int enemy_n = 0;
+	int maxID = 0;
 	long board_max_y = 5;
 	long board_max_x = 5;
-	int numShips = 1;
+	int numShips = 2;
 	
 	int c , wID = 0;
 	int my_id = 0;
@@ -194,6 +195,7 @@ int main(int argc, char **argv)
 					// ids set, need to start game
 					set = true;
 					enemy_n = buf.id_info.my_id - 1;
+					maxID = enemy_n + 1;
 				}
 			} else { // Ring complete, every player has their id
 				// send the number of players in the network in the start msg
@@ -218,6 +220,7 @@ int main(int argc, char **argv)
 			} else { // if(buf.info.content == content_start)
 				ready = true;
 				enemy_n = buf.info.status;
+				maxID = enemy_n + 1;
 			}
 			net.next_player.send(&buf, msg_size);
 		}
@@ -265,7 +268,7 @@ int main(int argc, char **argv)
 				Coord pos;
 				int8_t target;
 				
-				read_attack(pos, target, enemy_n, net.my_id, board_max_y, board_max_x);
+				read_attack(pos, target, maxID, net.my_id, board_max_y, board_max_x);
 				
 				// set up msg info
 				attack_msg = net.att_msg(pos, target);
