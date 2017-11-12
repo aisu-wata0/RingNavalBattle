@@ -327,7 +327,7 @@ int main(int argc, char **argv)
 				net.pass_baton();
 			}else{
 				size_t msg_size = net.prev_player.rec(&buf, &p_addr);
-								
+				
 				// Message for me
 				if( net.is_this_for_me(buf) ){
 					//cout << "We received a tegami taichou" << endl;
@@ -376,7 +376,6 @@ int main(int argc, char **argv)
 						my_turn = true;
 					}
 				}
-				// send forward non baton msgs
 				if (buf.info.content == content_ship_destroyed){
 					enemies.at(buf.info.origin-1).set_destroyed_ship(buf.ship_info.ship);
 					if(enemies.at(buf.info.origin-1).ship_n == 0){
@@ -392,6 +391,7 @@ int main(int argc, char **argv)
 						}
 					}
 				}
+				// send forward non baton msgs
 				if( ! buf.info.baton ){
 					net.next_player.send(&buf, msg_size);
 				}
@@ -400,8 +400,7 @@ int main(int argc, char **argv)
 	}
 	if(wID == net.my_id){
 		cout << "You are the winner! Congratulations!!" << endl;
-	}
-	else{
+	} else {
 		cout << "You LOST! Player " << wID << " destroyed everyone! Try harder next time!!" << endl;
 	}
 	return 0;
