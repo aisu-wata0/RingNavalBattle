@@ -44,7 +44,7 @@ void board_setup(Board& board, long numShips, int ID){
 	cout << "You have " << numShips << " to dispatch.\n";
 	string confirmed("n");
 	while(confirmed != "y"){
-		board.set_board(water);
+		board.reset();
 		for(long i = 0; i < numShips; i++){
 			cout << "What will be the coord for the top left (y x) of the ship #" << i << " taichou?\n";
 			

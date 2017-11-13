@@ -71,6 +71,17 @@ class Board {
 		return this->at(pos.y,pos.x);
 	}
 	
+	void reset(){
+		if(posession == Mine) {
+			ship_n = 0;
+			ship_max = 0;
+			set_board(water);
+		} else {
+			ship_n = ship_max;
+			set_board(unk);
+		}
+	}
+	
 	void set_board(uint32_t sp){
 		for(long i = 0; i < sea_max.y; i++){
 			for(long j=0; j < sea_max.y; j++){
