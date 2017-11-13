@@ -264,6 +264,8 @@ int main(int argc, char **argv)
 	while(!game_ended || has_response){
 		if(my_turn){
 			if(enemies.at(net.my_id-1).alive()){
+				cout << "It's now our turn!" << endl;
+				
 				msg_buffer attack_msg;
 				Coord pos;
 				int8_t target;
@@ -300,8 +302,6 @@ int main(int argc, char **argv)
 					game_ended = true;
 					wID = net.my_id;
 				}
-				cout << "Enemy map:\n";
-				enemies.at(target-1).print();
 				print_game(enemies);
 				
 				if(enemy_n == 0){
@@ -372,15 +372,16 @@ int main(int argc, char **argv)
 						enemies.at(net.my_id-1).print();
 					// if not an attack
 					} else if(buf.info.content == content_turn){	//turn
-						cout << "It's now our turn!" << endl;
 						my_turn = true;
 					}
 				}
 				if (buf.info.content == content_ship_destroyed){
 					enemies.at(buf.info.origin-1).set_destroyed_ship(buf.ship_info.ship);
+					cout <<"Player "<< buf.info.origin <<"\'s ship was destroyed! Map:\n";
+					enemies.at(buf.info.origin-1).print();
 					if(enemies.at(buf.info.origin-1).ship_n == 0){
 						enemy_n--;
-						cout << "Player " <<  (int) buf.info.origin << " has been annihilated by Player" << (int) buf.info.dest << ", who will be next? Nyaahahaha\n";
+						cout << "Player " <<  (int) buf.info.origin << " has been annihilated by Player " << (int) buf.info.dest << ", who will be next? Nyaahahaha\n";
 					}
 					if(enemy_n == 1 && enemies.at(net.my_id-1).ship_n == 0){
 						game_ended = true;
@@ -399,9 +400,9 @@ int main(int argc, char **argv)
 		}
 	}
 	if(wID == net.my_id){
-		cout << "You are the winner! Congratulations!!" << endl;
+		cout << "You are the winner! Congratulations!" << endl;
 	} else {
-		cout << "You LOST! Player " << wID << " destroyed everyone! Try harder next time!!" << endl;
+		cout << "You LOST! Player " << wID << " destroyed everyone! Try harder next time!" << endl;
 	}
 	return 0;
 }
