@@ -113,9 +113,6 @@ class Board {
 		}
 		int ship_id = ship_max;
 		
-		ship_max++;
-		ship_n++;
-		
 		if(ship.not_exist(sea_max)){
 			return FAIL;
 		}
@@ -133,6 +130,10 @@ class Board {
 				this->at(k,l).idn = ship_id;
 			}
 		}
+		
+		ship_max++;
+		ship_n++;
+		
 		return true;
 	}
 	

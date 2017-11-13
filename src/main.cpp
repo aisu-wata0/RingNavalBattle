@@ -14,6 +14,28 @@
 #define DEBUG false
 using namespace std;
 
+bool id_in_range(int target, int enemy_n, int my_id){
+	if(target == my_id || target > enemy_n + 1 || target < 1) return false;
+	return true;
+}
+
+bool pos_in_range(Coord pos, long max_y, long max_x){
+	if(pos.x < 0 || pos.x > max_x) return false;
+	if(pos.y < 0 || pos.y > max_y) return false;
+	return true;
+}
+
+int readInteger(){
+	int int_num;
+	
+	while(not(cin >> int_num)){
+		cout << "Not a valid number" << endl;
+		cin.clear();
+		cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+	}
+	return int_num;
+}
+
 void board_setup(Board& board, long numShips, int ID){
 	Ship newShip;
 	
@@ -25,10 +47,13 @@ void board_setup(Board& board, long numShips, int ID){
 		board.set_board(water);
 		for(long i = 0; i < numShips; i++){
 			cout << "What will be the coord for the top left (y x) of the ship #" << i << " taichou?\n";
-			cin >> newShip.top_left.y >> newShip.top_left.x;
+			
+			newShip.top_left.y = readInteger();
+			newShip.top_left.x = readInteger();
 		
 			cout << "And how about the height and width of the ship #" << i << " taichou?\n";
-			cin >> newShip.height >> newShip.width;
+			newShip.height = readInteger();
+			newShip.width = readInteger();
 			
 			if(board.set_ship(newShip) == FAIL){
 				i--;
@@ -72,29 +97,7 @@ void print_game(vector<Board> enemies){
 	cout << endl;
 }
 
-bool id_in_range(int target, int enemy_n, int my_id){
-	if(target == my_id || target > enemy_n + 1 || target < 1) return false;
-	return true;
-}
-
-bool pos_in_range(Coord pos, long max_y, long max_x){
-	if(pos.x < 0 || pos.x > max_x) return false;
-	if(pos.y < 0 || pos.y > max_y) return false;
-	return true;
-}
-
-int readInteger(){
-	int int_num;
-	
-	while(not(cin >> int_num)){
-		cout << "Not a valid number" << endl;
-		cin.clear();
-		cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-	}
-	return int_num;
-}
-
-void read_attack(Coord& pos, int8_t& dest, int enemy_n, int my_id, long max_y, long max_x){
+void readAttack(Coord& pos, int8_t& dest, int enemy_n, int my_id, Coord max){
 	int d = 0;
 	pos.y = 0;
 	pos.x = 0;
@@ -114,14 +117,12 @@ void read_attack(Coord& pos, int8_t& dest, int enemy_n, int my_id, long max_y, l
 	cout << "Where will you attack next taichou? (y x)" << endl;
 	
 	while(!valid){
-		cin >> pos.y >> pos.x;
-		if (cin && pos_in_range(pos, max_y, max_x)){
+		pos.y = readInteger();
+		pos.x = readInteger();
+		if (pos_in_range(pos, max.y, max.x)){
 			valid = true;
-		}
-		if(!valid){
+		} else {
 			cout << "Baka! Please enter a valid position to attack." << endl;
-			cin.clear();
-			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 	}
 }
@@ -270,7 +271,7 @@ int main(int argc, char **argv)
 				Coord pos;
 				int8_t target;
 				
-				read_attack(pos, target, maxID, net.my_id, board_max_y, board_max_x);
+				readAttack(pos, target, maxID, net.my_id, Coord{board_max_y, board_max_x});
 				
 				// set up msg info
 				attack_msg = net.att_msg(pos, target);
@@ -293,7 +294,7 @@ int main(int argc, char **argv)
 					enemies.at(target-1).set_destroyed_ship(buf.ship_info.ship);
 					if(enemies.at(target-1).ship_n == 0){
 						enemy_n--;
-						cout << "Player " << (int) buf.info.origin << " has been annihilated, who will be next?\n";
+						cout << "Player " << (int)buf.info.origin << " has been annihilated, who will be next?\n";
 					}
 				} else {
 					cout << "You missed!" << endl;
@@ -377,11 +378,11 @@ int main(int argc, char **argv)
 				}
 				if (buf.info.content == content_ship_destroyed){
 					enemies.at(buf.info.origin-1).set_destroyed_ship(buf.ship_info.ship);
-					cout <<"Player "<< buf.info.origin <<"\'s ship was destroyed! Map:\n";
+					cout <<"Player "<< (int)buf.info.origin <<"\'s ship was destroyed! Map:\n";
 					enemies.at(buf.info.origin-1).print();
 					if(enemies.at(buf.info.origin-1).ship_n == 0){
 						enemy_n--;
-						cout << "Player " <<  (int) buf.info.origin << " has been annihilated by Player " << (int) buf.info.dest << ", who will be next? Nyaahahaha\n";
+						cout << "Player " << (int)buf.info.origin << " has been annihilated by Player " << (int)buf.info.dest << ", who will be next? Nyaahahaha\n";
 					}
 					if(enemy_n == 1 && enemies.at(net.my_id-1).ship_n == 0){
 						game_ended = true;
